@@ -54,13 +54,13 @@ public class RuleTests {
 
   @Test
   void ruleShouldThrowWhenAlgorithmDoesNotMatchParameter() {
-    IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> {
-      Rule invalidRule = new Rule(
-              "user:potassiumlover33:login",
-              Rule.RateLimiterAlgorithm.LEAKY_BUCKET,
-              new TokenBucketParameters(10, 1)
-      );
-    });
+    IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
+            new Rule(
+                    "user:potassiumlover33:login",
+                    Rule.RateLimiterAlgorithm.LEAKY_BUCKET,
+                    new TokenBucketParameters(10, 1)
+            )
+    );
 
     assertEquals(
             "Algorithm LEAKY_BUCKET does not match parameters TokenBucketParameters",
