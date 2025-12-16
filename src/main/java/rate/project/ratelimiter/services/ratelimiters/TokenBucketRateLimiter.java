@@ -17,6 +17,11 @@ public final class TokenBucketRateLimiter implements RateLimiter {
   }
 
   @Override
+  public void initialize() {
+    tokenBucketService.fillBucket(key, capacity);
+  }
+
+  @Override
   public boolean tryAcquire() {
     return tokenBucketService.tryUseToken(key, capacity, refillRate);
   }

@@ -17,6 +17,11 @@ public final class LeakyBucketRateLimiter implements RateLimiter {
   }
 
   @Override
+  public void initialize() {
+    leakyBucketService.emptyBucket(key, capacity);
+  }
+
+  @Override
   public boolean tryAcquire() {
     return leakyBucketService.tryAddWater(key, capacity, outflowRate);
   }
