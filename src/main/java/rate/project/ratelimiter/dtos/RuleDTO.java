@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import rate.project.ratelimiter.dtos.parameters.AlgorithmParameters;
 import rate.project.ratelimiter.dtos.parameters.LeakyBucketParameters;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
+import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
 
 /**
  * This class represents a rate limiter rule. It is convertible to and from JSON.
@@ -19,7 +20,7 @@ import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
  *   }
  * }
  */
-public record Rule(
+public record RuleDTO(
         String key,
         RateLimiterAlgorithm algorithm,
         // Since AlgorithmParameters is polymorphic, we need to use Jackson's
@@ -43,7 +44,7 @@ public record Rule(
 ) {
 
   // Ensure that the rule has been created with parameters that match the algorithm
-  public Rule {
+  public RuleDTO {
     if (!algorithmMatchesParameters(algorithm, parameters)) {
       throw new IllegalArgumentException(
               "Algorithm " + algorithm + " does not match parameters " + parameters.getClass().getSimpleName()
@@ -67,10 +68,4 @@ public record Rule(
             '}';
   }
 
-  public enum RateLimiterAlgorithm {
-    TOKEN_BUCKET,
-    LEAKY_BUCKET
-  }
-
 }
-

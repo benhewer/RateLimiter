@@ -2,11 +2,12 @@ package rate.project.ratelimiter.dtos;
 
 import org.junit.jupiter.api.Test;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
+import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
 import tools.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class RuleTests {
+public class RuleDTOTests {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -23,10 +24,10 @@ public class RuleTests {
             }
             """;
 
-    Rule rule = objectMapper.readValue(json, Rule.class);
+    RuleDTO rule = objectMapper.readValue(json, RuleDTO.class);
 
     assertEquals("user:potassiumlover33:login", rule.key());
-    assertEquals(Rule.RateLimiterAlgorithm.TOKEN_BUCKET, rule.algorithm());
+    assertEquals(RateLimiterAlgorithm.TOKEN_BUCKET, rule.algorithm());
 
     assertInstanceOf(TokenBucketParameters.class, rule.parameters());
 
@@ -39,9 +40,9 @@ public class RuleTests {
 
   @Test
   void ruleShouldSerializeToJson() {
-    Rule rule = new Rule(
+    RuleDTO rule = new RuleDTO(
             "user:potassiumlover33:login",
-            Rule.RateLimiterAlgorithm.TOKEN_BUCKET,
+            RateLimiterAlgorithm.TOKEN_BUCKET,
             new TokenBucketParameters(10, 1)
     );
 
@@ -55,9 +56,9 @@ public class RuleTests {
   @Test
   void ruleShouldThrowWhenAlgorithmDoesNotMatchParameter() {
     IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
-            new Rule(
+            new RuleDTO(
                     "user:potassiumlover33:login",
-                    Rule.RateLimiterAlgorithm.LEAKY_BUCKET,
+                    RateLimiterAlgorithm.LEAKY_BUCKET,
                     new TokenBucketParameters(10, 1)
             )
     );
