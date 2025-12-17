@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 @Component
 public interface RateLimiter {
 
-  void initialize();
+  boolean initialize();
 
   boolean tryAcquire();
 

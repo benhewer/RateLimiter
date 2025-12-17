@@ -1,12 +1,20 @@
 package rate.project.ratelimiter.services;
 
 import org.springframework.stereotype.Service;
+import rate.project.ratelimiter.entities.redis.RateLimiterState;
 
 @Service
 public class TokenBucketService {
 
-  public void fillBucket(String key, long capacity) {
+  private final RateLimiterStateService service;
 
+  public TokenBucketService(RateLimiterStateService service) {
+    this.service = service;
+  }
+
+  public boolean fillBucket(String key, long capacity) {
+    RateLimiterState state = new RateLimiterState(key, capacity, System.currentTimeMillis());
+    return service.initializeState(state);
   }
 
   public boolean tryUseToken(String key, long capacity, long refillRate) {

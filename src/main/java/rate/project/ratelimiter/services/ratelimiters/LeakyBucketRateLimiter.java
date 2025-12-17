@@ -17,8 +17,8 @@ public final class LeakyBucketRateLimiter implements RateLimiter {
   }
 
   @Override
-  public void initialize() {
-    leakyBucketService.emptyBucket(key, capacity);
+  public boolean initialize() {
+    return leakyBucketService.emptyBucket(key);
   }
 
   @Override

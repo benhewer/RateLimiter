@@ -21,7 +21,12 @@ public class RuleController {
 
   @PostMapping("/rule")
   public ResponseEntity<@NotNull RuleDTO> addRule(@RequestBody RuleDTO rule) {
-    ruleService.createRule(rule);
+    boolean success = ruleService.createRule(rule);
+
+    if (!success) {
+      // If the rule already exists, return HTTP 400 Bad Request
+      return ResponseEntity.badRequest().build();
+    }
 
     // Return HTTP 201 Created with the rule in the body
     return ResponseEntity
