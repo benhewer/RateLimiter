@@ -1,13 +1,17 @@
 package rate.project.ratelimiter.entities.redis;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
+
+import java.io.Serializable;
 
 /**
  * Maps directly to a redis entry. Stores only the temporary state of a rate limiter algorithm.
  */
 @RedisHash("rate_limiter_state")
-public class RateLimiterState {
+public class RateLimiterState implements Serializable {
 
+  @Id
   private String key;
   private long level;
   private long lastUpdateTime;
