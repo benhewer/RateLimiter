@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 public class RuleServiceTests {
 
   @Mock
-  private RuleEntityRepository ruleEntityRepository;
+  private RuleEntityService ruleEntityService;
   @Mock
   private RateLimiterFactory rateLimiterFactory;
   @Mock
@@ -57,7 +57,7 @@ public class RuleServiceTests {
 
     // Ensure ruleRepository.save() was called once with the correct arguments
     ArgumentCaptor<RuleEntity> captor = ArgumentCaptor.forClass(RuleEntity.class);
-    verify(ruleEntityRepository).save(captor.capture());
+    verify(ruleEntityService).save(captor.capture());
 
     RuleEntity ruleEntity = captor.getValue();
     assertEquals(rule.key(), ruleEntity.key());
