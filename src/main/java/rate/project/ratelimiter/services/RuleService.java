@@ -7,6 +7,9 @@ import rate.project.ratelimiter.mappers.RuleMapper;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.services.ratelimiters.RateLimiter;
 
+/**
+ * Handles the logic behind the RuleController.
+ */
 @Service
 public class RuleService {
 

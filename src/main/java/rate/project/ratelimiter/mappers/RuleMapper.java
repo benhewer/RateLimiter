@@ -4,6 +4,9 @@ import org.springframework.stereotype.Component;
 import rate.project.ratelimiter.dtos.RuleDTO;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
 
+/**
+ * Maps between RuleDTO and RuleEntity.
+ */
 @Component
 public class RuleMapper {
 

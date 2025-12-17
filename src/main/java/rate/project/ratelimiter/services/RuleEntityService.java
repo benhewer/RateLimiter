@@ -4,6 +4,9 @@ import org.springframework.stereotype.Service;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.repositories.mongo.RuleEntityRepository;
 
+/**
+ * Provides an easy way to interact with the RuleEntity collection in MongoDB.
+ */
 @Service
 public class RuleEntityService {
 

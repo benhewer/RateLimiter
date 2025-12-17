@@ -5,6 +5,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import rate.project.ratelimiter.dtos.parameters.AlgorithmParameters;
 import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
 
+/**
+ * Represents a rate limiter rule, to be stored in MongoDB.
+ * Has a one-to-one relationship with the RuleDTO class.
+ */
 @Document("rules")
 public class RuleEntity {
 

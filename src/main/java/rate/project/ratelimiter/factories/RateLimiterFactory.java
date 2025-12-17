@@ -10,6 +10,9 @@ import rate.project.ratelimiter.services.ratelimiters.LeakyBucketRateLimiter;
 import rate.project.ratelimiter.services.ratelimiters.RateLimiter;
 import rate.project.ratelimiter.services.ratelimiters.TokenBucketRateLimiter;
 
+/**
+ * Creates the appropriate rate limiter based on the given rule's algorithm.
+ */
 @Component
 public final class RateLimiterFactory {
 

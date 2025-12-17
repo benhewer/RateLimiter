@@ -4,6 +4,9 @@ import org.springframework.stereotype.Service;
 import rate.project.ratelimiter.entities.redis.RateLimiterState;
 import rate.project.ratelimiter.repositories.redis.RateLimiterStateRepository;
 
+/**
+ * Provides an easy way to interact with the RateLimiterState collection in Redis.
+ */
 @Service
 public class RateLimiterStateService {
 

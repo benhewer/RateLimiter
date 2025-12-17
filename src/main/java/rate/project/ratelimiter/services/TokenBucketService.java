@@ -3,6 +3,9 @@ package rate.project.ratelimiter.services;
 import org.springframework.stereotype.Service;
 import rate.project.ratelimiter.entities.redis.RateLimiterState;
 
+/**
+ * Handles state for a token bucket rate limiter.
+ */
 @Service
 public class TokenBucketService {
 
