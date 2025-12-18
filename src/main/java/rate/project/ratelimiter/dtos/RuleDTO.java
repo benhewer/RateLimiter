@@ -68,4 +68,12 @@ public record RuleDTO(
             '}';
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    RuleDTO ruleDTO = (RuleDTO) o;
+    return key.equals(ruleDTO.key) && algorithm == ruleDTO.algorithm && parameters.equals(ruleDTO.parameters);
+  }
+
 }

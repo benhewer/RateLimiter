@@ -12,7 +12,6 @@ import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
 import rate.project.ratelimiter.factories.RateLimiterFactory;
 import rate.project.ratelimiter.mappers.RuleMapper;
-import rate.project.ratelimiter.repositories.mongo.RuleEntityRepository;
 import rate.project.ratelimiter.services.ratelimiters.RateLimiter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

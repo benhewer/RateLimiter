@@ -39,4 +39,12 @@ public class RuleEntity {
     return parameters;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    RuleEntity that = (RuleEntity) o;
+    return key.equals(that.key) && algorithm == that.algorithm && parameters.equals(that.parameters);
+  }
+
 }

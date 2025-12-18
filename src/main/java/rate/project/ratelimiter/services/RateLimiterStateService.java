@@ -10,15 +10,15 @@ import rate.project.ratelimiter.repositories.redis.RateLimiterStateRepository;
 @Service
 public class RateLimiterStateService {
 
-  private final RateLimiterStateRepository stateRepository;
+  private final RateLimiterStateRepository rateLimiterStateRepository;
 
-  public RateLimiterStateService(RateLimiterStateRepository stateRepository) {
-    this.stateRepository = stateRepository;
+  public RateLimiterStateService(RateLimiterStateRepository rateLimiterStateRepository) {
+    this.rateLimiterStateRepository = rateLimiterStateRepository;
   }
 
   public boolean initializeState(RateLimiterState state) {
     if (!exists(state.getKey())) {
-      stateRepository.save(state);
+      rateLimiterStateRepository.save(state);
       return true;
     }
     System.out.println("State already exists");
@@ -26,11 +26,11 @@ public class RateLimiterStateService {
   }
 
   public RateLimiterState getState(String key) {
-    return stateRepository.findById(key).orElse(null);
+    return rateLimiterStateRepository.findById(key).orElse(null);
   }
 
   public boolean exists(String key) {
-    return stateRepository.existsById(key);
+    return rateLimiterStateRepository.existsById(key);
   }
 
 }

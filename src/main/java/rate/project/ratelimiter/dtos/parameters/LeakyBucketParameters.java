@@ -15,4 +15,12 @@ public record LeakyBucketParameters(
             '}';
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    LeakyBucketParameters that = (LeakyBucketParameters) o;
+    return capacity == that.capacity && outflowRate == that.outflowRate;
+  }
+
 }

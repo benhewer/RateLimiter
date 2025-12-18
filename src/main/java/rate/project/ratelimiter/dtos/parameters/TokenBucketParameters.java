@@ -15,4 +15,12 @@ public record TokenBucketParameters(
             '}';
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    TokenBucketParameters that = (TokenBucketParameters) o;
+    return capacity == that.capacity && refillRate == that.refillRate;
+  }
+
 }

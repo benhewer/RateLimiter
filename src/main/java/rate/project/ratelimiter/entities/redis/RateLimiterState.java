@@ -46,4 +46,12 @@ public class RateLimiterState implements Serializable {
     this.lastUpdateTime = lastUpdateTime;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    RateLimiterState that = (RateLimiterState) o;
+    return key.equals(that.key);
+  }
+
 }

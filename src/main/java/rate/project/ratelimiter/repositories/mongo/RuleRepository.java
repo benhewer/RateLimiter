@@ -9,4 +9,4 @@ import rate.project.ratelimiter.entities.mongo.RuleEntity;
  * A way to interact with the RuleEntity collection in MongoDB.
  */
 @Repository
-public interface RuleEntityRepository extends MongoRepository<@NotNull RuleEntity, @NotNull String> { }
+public interface RuleRepository extends MongoRepository<@NotNull RuleEntity, @NotNull String> { }
