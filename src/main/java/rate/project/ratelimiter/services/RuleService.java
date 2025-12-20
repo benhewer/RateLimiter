@@ -2,10 +2,9 @@ package rate.project.ratelimiter.services;
 
 import org.springframework.stereotype.Service;
 import rate.project.ratelimiter.dtos.RuleDTO;
-import rate.project.ratelimiter.factories.RateLimiterFactory;
 import rate.project.ratelimiter.mappers.RuleMapper;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
-import rate.project.ratelimiter.services.ratelimiters.RateLimiter;
+import rate.project.ratelimiter.repositories.mongo.RuleRepository;
 
 /**
  * Handles the logic behind the RuleController.
@@ -13,25 +12,50 @@ import rate.project.ratelimiter.services.ratelimiters.RateLimiter;
 @Service
 public class RuleService {
 
-  private final RuleEntityService ruleEntityService;
+  private final RuleRepository ruleRepository;
   private final RuleMapper mapper;
-  private final RateLimiterFactory rateLimiterFactory;
 
-  public RuleService(RuleEntityService ruleEntityService, RuleMapper mapper, RateLimiterFactory rateLimiterFactory) {
-    this.ruleEntityService = ruleEntityService;
+  public RuleService(RuleRepository ruleRepository, RuleMapper mapper) {
+    this.ruleRepository = ruleRepository;
     this.mapper = mapper;
-    this.rateLimiterFactory = rateLimiterFactory;
   }
 
   public boolean createRule(RuleDTO ruleDTO) {
     RuleEntity rule = mapper.toEntity(ruleDTO);
 
-    // Save the rule to the database
-    ruleEntityService.save(rule);
+    // Check if the rule already exists
+    if (ruleRepository.existsById(rule.key())) {
+      return false;
+    }
 
-    // Initialize the rate limiter algorithm in redis
-    RateLimiter rateLimiter = rateLimiterFactory.create(rule);
-    return rateLimiter.initialize();
+    // Save the rule to the database
+    ruleRepository.save(rule);
+    return true;
+  }
+
+  public RuleEntity getRule(String key) {
+    return ruleRepository.findById(key).orElse(null);
+  }
+
+  public boolean updateRule(RuleDTO ruleDTO) {
+    RuleEntity rule = mapper.toEntity(ruleDTO);
+
+    // Check if the rule doesn't exist yet
+    if (!ruleRepository.existsById(rule.key())) {
+      return false;
+    }
+
+    ruleRepository.save(rule);
+    return true;
+  }
+
+  public boolean deleteRule(String key) {
+    if (!ruleRepository.existsById(key)) {
+      return false;
+    }
+
+    ruleRepository.deleteById(key);
+    return true;
   }
 
 }

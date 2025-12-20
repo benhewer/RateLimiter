@@ -10,9 +10,8 @@ import rate.project.ratelimiter.dtos.RuleDTO;
 import rate.project.ratelimiter.dtos.parameters.LeakyBucketParameters;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
-import rate.project.ratelimiter.factories.RateLimiterFactory;
 import rate.project.ratelimiter.mappers.RuleMapper;
-import rate.project.ratelimiter.services.ratelimiters.RateLimiter;
+import rate.project.ratelimiter.repositories.mongo.RuleRepository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,11 +21,7 @@ import static org.mockito.Mockito.*;
 public class RuleServiceTests {
 
   @Mock
-  private RuleEntityService ruleEntityService;
-  @Mock
-  private RateLimiterFactory rateLimiterFactory;
-  @Mock
-  private RateLimiter rateLimiter;
+  private RuleRepository ruleRepository;
   @Mock
   private RuleMapper mapper;
 
@@ -34,8 +29,8 @@ public class RuleServiceTests {
   private RuleService service;
 
   @Test
-  void createRuleShouldSaveRuleToDatabaseAndInitializeRateLimiterState() {
-    RuleDTO rule = new RuleDTO(
+  void createRuleShouldSaveRuleToDatabase() {
+    RuleDTO dto = new RuleDTO(
             "user:potassiumlover33:post",
             RateLimiterAlgorithm.LEAKY_BUCKET,
             new LeakyBucketParameters(
@@ -43,30 +38,22 @@ public class RuleServiceTests {
             )
     );
 
-    RuleEntity fakeEntity = new RuleEntity(rule.key(), rule.algorithm(), rule.parameters());
+    RuleEntity entity = new RuleEntity(dto.key(), dto.algorithm(), dto.parameters());
 
-    // Mock the mapper and factory behavior to isolate RuleService
-    when(mapper.toEntity(rule)).thenReturn(fakeEntity);
-    when(rateLimiterFactory.create(fakeEntity)).thenReturn(rateLimiter);
-    when(rateLimiter.initialize()).thenReturn(true);
+    when(mapper.toEntity(dto)).thenReturn(entity);
 
-    boolean initialized = service.createRule(rule);
+    boolean initialized = service.createRule(dto);
 
     assertTrue(initialized);
 
     // Ensure ruleRepository.save() was called once with the correct arguments
     ArgumentCaptor<RuleEntity> captor = ArgumentCaptor.forClass(RuleEntity.class);
-    verify(ruleEntityService).save(captor.capture());
+    verify(ruleRepository).save(captor.capture());
 
     RuleEntity ruleEntity = captor.getValue();
-    assertEquals(rule.key(), ruleEntity.key());
-    assertEquals(rule.algorithm(), ruleEntity.algorithm());
-
-    // Ensure rateLimiterFactory.create() was called once
-    verify(rateLimiterFactory).create(ruleEntity);
-
-    // Ensure rateLimiter.initialize() was called once
-    verify(rateLimiter).initialize();
+    assertEquals(dto.key(), ruleEntity.key());
+    assertEquals(dto.algorithm(), ruleEntity.algorithm());
+    assertEquals(dto.parameters(), ruleEntity.parameters());
   }
 
 }

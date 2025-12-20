@@ -1,29 +1,21 @@
 package rate.project.ratelimiter.services.ratelimiters;
 
-import rate.project.ratelimiter.services.TokenBucketService;
+import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
 
 public final class TokenBucketRateLimiter implements RateLimiter {
 
-  private final String key;
   private final long capacity;
   private final long refillRate;
-  private final TokenBucketService tokenBucketService;
 
-  public TokenBucketRateLimiter(String key, long capacity, long refillRate, TokenBucketService tokenBucketService) {
-    this.key = key;
-    this.capacity = capacity;
-    this.refillRate = refillRate;
-    this.tokenBucketService = tokenBucketService;
+  public TokenBucketRateLimiter(TokenBucketParameters parameters) {
+    this.capacity = parameters.capacity();
+    this.refillRate = parameters.refillRate();
   }
 
   @Override
-  public boolean initialize() {
-    return tokenBucketService.fillBucket(key, capacity);
-  }
-
-  @Override
-  public boolean tryAcquire() {
-    return tokenBucketService.tryUseToken(key, capacity, refillRate);
+  public boolean tryAcquire(String key) {
+    // TODO: Run lua script
+    return false;
   }
 
 }

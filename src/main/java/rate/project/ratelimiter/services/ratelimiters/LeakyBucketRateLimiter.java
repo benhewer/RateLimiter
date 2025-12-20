@@ -1,29 +1,21 @@
 package rate.project.ratelimiter.services.ratelimiters;
 
-import rate.project.ratelimiter.services.LeakyBucketService;
+import rate.project.ratelimiter.dtos.parameters.LeakyBucketParameters;
 
 public final class LeakyBucketRateLimiter implements RateLimiter {
 
-  private final String key;
   private final long capacity;
   private final long outflowRate;
-  private final LeakyBucketService leakyBucketService;
 
-  public LeakyBucketRateLimiter(String key, long capacity, long outflowRate, LeakyBucketService leakyBucketService) {
-    this.key = key;
-    this.capacity = capacity;
-    this.outflowRate = outflowRate;
-    this.leakyBucketService = leakyBucketService;
+  public LeakyBucketRateLimiter(LeakyBucketParameters parameters) {
+    this.capacity = parameters.capacity();
+    this.outflowRate = parameters.outflowRate();
   }
 
   @Override
-  public boolean initialize() {
-    return leakyBucketService.emptyBucket(key);
-  }
-
-  @Override
-  public boolean tryAcquire() {
-    return leakyBucketService.tryAddWater(key, capacity, outflowRate);
+  public boolean tryAcquire(String key) {
+    // TODO: Run Lua script
+    return false;
   }
 
 }

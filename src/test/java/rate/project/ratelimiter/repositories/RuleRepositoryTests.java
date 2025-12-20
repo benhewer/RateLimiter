@@ -2,7 +2,9 @@ package rate.project.ratelimiter.repositories;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.mongodb.test.autoconfigure.DataMongoTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import rate.project.ratelimiter.config.TestMongoConfig;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
@@ -11,7 +13,8 @@ import rate.project.ratelimiter.repositories.mongo.RuleRepository;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@DataMongoTest
+@SpringBootTest
+@Import(TestMongoConfig.class)
 public class RuleRepositoryTests {
 
   @Autowired
@@ -25,7 +28,7 @@ public class RuleRepositoryTests {
   @Test
   void saveShouldPersistRule() {
     RuleEntity rule = new RuleEntity(
-            "user:potassiumlover:login",
+            "user:potassiumlover33:login",
             RateLimiterAlgorithm.TOKEN_BUCKET,
             new TokenBucketParameters(10, 1)
     );
