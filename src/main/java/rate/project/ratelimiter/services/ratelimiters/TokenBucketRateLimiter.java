@@ -1,5 +1,6 @@
 package rate.project.ratelimiter.services.ratelimiters;
 
+import rate.project.ratelimiter.dtos.RateLimiterResponse;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
 
 public final class TokenBucketRateLimiter implements RateLimiter {
@@ -13,9 +14,9 @@ public final class TokenBucketRateLimiter implements RateLimiter {
   }
 
   @Override
-  public boolean tryAcquire(String key) {
+  public RateLimiterResponse tryAcquire(String key) {
     // TODO: Run lua script
-    return false;
+    return new RateLimiterResponse(false, 0, 0);
   }
 
 }

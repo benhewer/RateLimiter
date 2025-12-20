@@ -1,5 +1,6 @@
 package rate.project.ratelimiter.services.ratelimiters;
 
+import rate.project.ratelimiter.dtos.RateLimiterResponse;
 import rate.project.ratelimiter.dtos.parameters.LeakyBucketParameters;
 
 public final class LeakyBucketRateLimiter implements RateLimiter {
@@ -13,9 +14,9 @@ public final class LeakyBucketRateLimiter implements RateLimiter {
   }
 
   @Override
-  public boolean tryAcquire(String key) {
+  public RateLimiterResponse tryAcquire(String key) {
     // TODO: Run Lua script
-    return false;
+    return new RateLimiterResponse(false, 0, 0);
   }
 
 }
