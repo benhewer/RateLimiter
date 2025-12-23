@@ -12,7 +12,7 @@ import rate.project.ratelimiter.services.RuleService;
 import java.net.URI;
 
 /**
- * Handles HTTP requests for creating and checking rate limit rules.
+ * Handles HTTP requests for creating rate limit rules.
  */
 @RestController
 public class RuleController {

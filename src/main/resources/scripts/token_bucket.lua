@@ -2,22 +2,34 @@
 -- refill the tokens if necessary,
 -- then consume a token and return true, or, if none left, return false
 
-local tokens = tonumber(redis.call('GET', KEYS[1]))
-local now = tonumber(ARGV[1])
-local capacity = tonumber(ARGV[2])
-local refillRate = tonumber(ARGV[3])
+local key = tonumber(KEYS[1]);
+
+local capacity = tonumber(ARGV[1])
+local refillRate = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
+
+local tokens = tonumber(redis.call('GET', key))
 
 -- Compute elapsed time and refill tokens
-local lastRefillTime = tonumber(redis.call('HGET', KEYS[1], 'lastRefill') or 0)
+local lastRefillTime = tonumber(redis.call('HGET', key, 'lastRefill') or 0)
 local elapsed = now - lastRefillTime
 tokens = math.min(tokens + (elapsed * refillRate / 1000), capacity)
 
 -- Consume one token if available
 if tokens >= 1 then
 	tokens = tokens - 1
-	redis.call('SET', KEYS[1], tokens)
-	redis.call('HSET', KEYS[1], 'lastRefill', now)
-	return 1
+	redis.call('SET', key, tokens)
+	redis.call('HSET', key, 'lastRefill', now)
+	return {
+        1,           -- allowed (true)
+        tokens,      -- remaining
+        0            -- retry after ms
+    }
 else
-	return 0
+    local retryAfterMs = 1000 / refillRate - elapsed
+	return {
+        0,           -- allowed (false)
+        tokens,      -- remaining
+        retryAfterMs -- retry after ms
+    }
 end
