@@ -8,7 +8,8 @@ local capacity = tonumber(ARGV[1])
 local refillRate = tonumber(ARGV[2])
 local now = tonumber(ARGV[3])
 
-local tokens = tonumber(redis.call('GET', key))
+-- If the key is not present, tokens = capacity, otherwise set tokens to the redis value
+local tokens = tonumber(redis.call('HGET', key, 'tokens')) or capacity
 
 -- Compute elapsed time and refill tokens
 local lastRefillTime = tonumber(redis.call('HGET', key, 'lastRefill') or 0)
@@ -18,7 +19,7 @@ tokens = math.min(tokens + (elapsed * refillRate / 1000), capacity)
 -- Consume one token if available
 if tokens >= 1 then
 	tokens = tokens - 1
-	redis.call('SET', key, tokens)
+	redis.call('HSET', key, 'tokens', tokens)
 	redis.call('HSET', key, 'lastRefill', now)
 	return {
         1,           -- allowed (true)
