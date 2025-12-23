@@ -1,29 +1,26 @@
 package rate.project.ratelimiter.services.ratelimiters;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.redis.core.RedisOperations;
-import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.stereotype.Component;
 import rate.project.ratelimiter.dtos.RateLimiterResponse;
-import rate.project.ratelimiter.dtos.parameters.LeakyBucketParameters;
+import rate.project.ratelimiter.factories.RedisScriptFactory;
+import rate.project.ratelimiter.repositories.mongo.RuleRepository;
 
-import java.util.List;
-
+@Component
 public final class LeakyBucketRateLimiter implements RateLimiter {
 
   private final RedisOperations<String, String> redis;
-  private final RedisScript<@NotNull List<Long>> leakyBucketScript;
-  private final long capacity;
-  private final long outflowRate;
+  private final RedisScriptFactory redisScriptFactory;
+  private final RuleRepository ruleRepository;
 
   public LeakyBucketRateLimiter(
           RedisOperations<String, String> redis,
-          RedisScript<@NotNull List<Long>> leakyBucketScript,
-          LeakyBucketParameters parameters
+          RedisScriptFactory rescriptFactory,
+          RuleRepository ruleRepository
   ) {
     this.redis = redis;
-    this.leakyBucketScript = leakyBucketScript;
-    this.capacity = parameters.capacity();
-    this.outflowRate = parameters.outflowRate();
+    this.redisScriptFactory = rescriptFactory;
+    this.ruleRepository = ruleRepository;
   }
 
   @Override
