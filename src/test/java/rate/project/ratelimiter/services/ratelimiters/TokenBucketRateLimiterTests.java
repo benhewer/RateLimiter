@@ -37,7 +37,6 @@ public class TokenBucketRateLimiterTests {
   @InjectMocks
   private TokenBucketRateLimiter rateLimiter;
 
-
   @Test
   @SuppressWarnings("unchecked")
   void whenRuleInDB_thenTryAcquireShouldReturnRateLimiterResponse() {

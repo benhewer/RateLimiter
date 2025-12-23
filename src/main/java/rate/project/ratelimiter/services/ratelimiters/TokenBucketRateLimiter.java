@@ -1,10 +1,11 @@
 package rate.project.ratelimiter.services.ratelimiters;
 
-import org.springframework.data.redis.core.RedisOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import rate.project.ratelimiter.dtos.RateLimiterResponse;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
+import rate.project.ratelimiter.entities.redis.RateLimiterState;
 import rate.project.ratelimiter.factories.RedisScriptFactory;
 import rate.project.ratelimiter.repositories.mongo.RuleRepository;
 
@@ -13,12 +14,12 @@ import java.util.List;
 @Component
 public final class TokenBucketRateLimiter implements RateLimiter {
 
-  private final RedisOperations<String, String> redis;
+  private final RedisTemplate<String, RateLimiterState> redis;
   private final RedisScriptFactory redisScriptFactory;
   private final RuleRepository ruleRepository;
 
   public TokenBucketRateLimiter(
-          RedisOperations<String, String> redis,
+          RedisTemplate<String, RateLimiterState> redis,
           RedisScriptFactory redisScriptFactory,
           RuleRepository ruleRepository
   ) {
@@ -39,9 +40,9 @@ public final class TokenBucketRateLimiter implements RateLimiter {
     List<Long> result = redis.execute(
             redisScriptFactory.tokenBucketScript(),
             List.of(key),
-            parameters.capacity(),
-            parameters.refillRate(),
-            System.currentTimeMillis()
+            String.valueOf(parameters.capacity()),
+            String.valueOf(parameters.refillRate()),
+            String.valueOf(System.currentTimeMillis())
     );
 
     boolean allowed = result.get(0) == 1;

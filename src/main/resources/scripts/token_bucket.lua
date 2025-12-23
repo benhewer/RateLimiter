@@ -2,7 +2,7 @@
 -- refill the tokens if necessary,
 -- then consume a token and return true, or, if none left, return false
 
-local key = tonumber(KEYS[1]);
+local key = KEYS[1]
 
 local capacity = tonumber(ARGV[1])
 local refillRate = tonumber(ARGV[2])
