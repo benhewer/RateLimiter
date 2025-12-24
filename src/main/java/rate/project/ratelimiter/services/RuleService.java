@@ -33,15 +33,24 @@ public class RuleService {
     return true;
   }
 
-  public RuleEntity getRule(String key) {
-    return ruleRepository.findById(key).orElse(null);
+  public RuleDTO getRule(String key) {
+    RuleEntity rule = ruleRepository.findById(key).orElse(null);
+    if (rule == null) {
+      return null;
+    }
+    return mapper.toDTO(rule);
   }
 
-  public boolean updateRule(RuleDTO ruleDTO) {
+  public boolean updateRule(String key, RuleDTO ruleDTO) {
     RuleEntity rule = mapper.toEntity(ruleDTO);
 
+    // Ensure the keys are consistent
+    if (!key.equals(rule.key())) {
+      return false;
+    }
+
     // Check if the rule doesn't exist yet
-    if (!ruleRepository.existsById(rule.key())) {
+    if (!ruleRepository.existsById(key)) {
       return false;
     }
 
@@ -49,13 +58,14 @@ public class RuleService {
     return true;
   }
 
-  public boolean deleteRule(String key) {
-    if (!ruleRepository.existsById(key)) {
-      return false;
+  public RuleDTO deleteRule(String key) {
+    RuleEntity rule = ruleRepository.findById(key).orElse(null);
+    if (rule == null) {
+      return null;
     }
 
     ruleRepository.deleteById(key);
-    return true;
+    return mapper.toDTO(rule);
   }
 
 }

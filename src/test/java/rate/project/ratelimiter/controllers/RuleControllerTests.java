@@ -1,6 +1,8 @@
 package rate.project.ratelimiter.controllers;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -14,10 +16,11 @@ import rate.project.ratelimiter.services.RuleService;
 import tools.jackson.databind.ObjectMapper;
 
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = RuleController.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RuleControllerTests {
 
   @Autowired
@@ -29,46 +32,124 @@ public class RuleControllerTests {
   @MockitoBean
   private RuleService service;
 
-  @Test
-  void postRuleShouldAcceptAndReturnRule() throws Exception {
-    RuleDTO rule = new RuleDTO(
+  private RuleDTO rule;
+  private String ruleJson;
+  private String responseJson;
+
+  @BeforeAll
+  void setup() {
+    rule = new RuleDTO(
             "user:potassiumlover33:login",
             RateLimiterAlgorithm.TOKEN_BUCKET,
             new TokenBucketParameters(10, 1)
     );
+    ruleJson = objectMapper.writeValueAsString(rule);
+    responseJson = objectMapper.writeValueAsString(new ApiResponse<>(rule));
+  }
 
+
+  @Test
+  void whenRuleDoesNotExists_thenPostRuleShouldAcceptAndReturnRule() throws Exception {
     when(service.createRule(rule)).thenReturn(true);
 
-    String ruleJson = objectMapper.writeValueAsString(rule);
-    String expectedJson = objectMapper.writeValueAsString(new ApiResponse<>(rule));
-
     mockMvc.perform(
-            post("/rule")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(ruleJson)
+                    post("/rule")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(ruleJson)
             )
             .andExpect(status().isCreated())
-            .andExpect(content().json(expectedJson));
+            .andExpect(content().json(responseJson));
   }
 
   @Test
-  void postRuleShouldReturnErrorWhenRuleAlreadyExists() throws Exception {
-    RuleDTO rule = new RuleDTO(
-            "user:potassiumlover33:login",
-            RateLimiterAlgorithm.TOKEN_BUCKET,
-            new TokenBucketParameters(10, 1)
-    );
-
+  void whenRuleAlreadyExists_thenPostRuleShouldReturnBadRequest() throws Exception {
     when(service.createRule(rule)).thenReturn(false);
 
-    String ruleJson = objectMapper.writeValueAsString(rule);
-
     mockMvc.perform(
-            post("/rule")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(ruleJson)
+                    post("/rule")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(ruleJson)
             )
             .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void whenRuleFound_thenGetRuleShouldReturnRule() throws Exception {
+    when(service.getRule(rule.key())).thenReturn(rule);
+
+    mockMvc.perform(
+                    get("/rule/{key}", rule.key())
+            )
+            .andExpect(status().isOk())
+            .andExpect(content().json(responseJson));
+  }
+
+  @Test
+  void whenRuleNotFound_thenGetRuleShouldReturnBadRequest() throws Exception {
+    when(service.getRule(rule.key())).thenReturn(null);
+
+    mockMvc.perform(
+                    get("/rule/{key}", rule.key())
+            )
+            .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void whenRuleFound_thenUpdateRuleShouldReturnRule() throws Exception {
+    when(service.updateRule(rule.key(), rule)).thenReturn(true);
+
+    mockMvc.perform(
+                    put("/rule/{key}", rule.key())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(ruleJson)
+            )
+            .andExpect(status().isOk())
+            .andExpect(content().json(responseJson));
+  }
+
+  @Test
+  void whenRuleNotFound_thenUpdateRuleShouldReturnBadRequest() throws Exception {
+    when(service.updateRule(rule.key(), rule)).thenReturn(false);
+
+    mockMvc.perform(
+                    put("/rule/{key}", rule.key())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(ruleJson)
+            )
+            .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void whenKeysAreInconsistent_thenUpdateRuleShouldReturnBadRequest() throws Exception {
+    when(service.updateRule("incorrect:key", rule)).thenReturn(false);
+
+    mockMvc.perform(
+                    put("/rule/{key}", "incorrect:key")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(ruleJson)
+            )
+            .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void whenRuleNotFound_thenDeleteRuleShouldReturnBadRequest() throws Exception {
+    when(service.deleteRule(rule.key())).thenReturn(null);
+
+    mockMvc.perform(
+                    delete("/rule/{key}", rule.key())
+            )
+            .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void whenRuleFound_thenDeleteRuleShouldReturnDeletedRule() throws Exception {
+    when(service.deleteRule(rule.key())).thenReturn(rule);
+
+    mockMvc.perform(
+                    delete("/rule/{key}", rule.key())
+            )
+            .andExpect(status().isOk())
+            .andExpect(content().json(responseJson));
   }
 
 }

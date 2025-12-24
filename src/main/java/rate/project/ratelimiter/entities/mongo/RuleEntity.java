@@ -40,6 +40,15 @@ public class RuleEntity {
   }
 
   @Override
+  public String toString() {
+    return "RuleEntity{" +
+            "key='" + key + '\'' +
+            ", algorithm=" + algorithm +
+            ", parameters=" + parameters +
+            '}';
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

@@ -2,9 +2,7 @@ package rate.project.ratelimiter.controllers;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import rate.project.ratelimiter.dtos.ApiResponse;
 import rate.project.ratelimiter.dtos.RuleDTO;
 import rate.project.ratelimiter.services.RuleService;
@@ -41,6 +39,60 @@ public class RuleController {
     return ResponseEntity
             .created(URI.create("/rule/" + rule.key()))
             .body(response);
+  }
+
+  @GetMapping("/rule/{key}")
+  public ResponseEntity<@NotNull ApiResponse<RuleDTO>> getRule(@PathVariable String key) {
+    RuleDTO rule = ruleService.getRule(key);
+
+    // If the rule is not in the DB, return HTTP 400 Bad Request
+    if (rule == null) {
+      ApiResponse<RuleDTO> response = new ApiResponse<>("Rule not found. Create it with POST.");
+      return ResponseEntity
+              .badRequest()
+              .body(response);
+    }
+
+    // If the rule is in the DB, return it
+    ApiResponse<RuleDTO> response = new ApiResponse<>(rule);
+    return ResponseEntity
+            .ok(response);
+  }
+
+  @PutMapping("/rule/{key}")
+  public ResponseEntity<@NotNull ApiResponse<RuleDTO>> updateRule(@PathVariable String key, @RequestBody RuleDTO rule) {
+    boolean success = ruleService.updateRule(key, rule);
+
+    // If rule is not in the DB, return HTTP 400 Bad Request
+    if (!success) {
+      ApiResponse<RuleDTO> response = new ApiResponse<>("Check keys are consistent and that rule exists.");
+      return ResponseEntity
+              .badRequest()
+              .body(response);
+    }
+
+    // If the rule is in the DB, return the newly updated rule
+    ApiResponse<RuleDTO> response = new ApiResponse<>(rule);
+    return ResponseEntity
+            .ok(response);
+  }
+
+  @DeleteMapping("/rule/{key}")
+  public ResponseEntity<@NotNull ApiResponse<RuleDTO>> deleteRule(@PathVariable String key) {
+    RuleDTO rule = ruleService.deleteRule(key);
+
+    // If rule is not in the DB, return HTTP 400 Bad Request
+    if (rule == null) {
+      ApiResponse<RuleDTO> response = new ApiResponse<>("Rule does not exist.");
+      return ResponseEntity
+              .badRequest()
+              .body(response);
+    }
+
+    // If the rule is in the DB, return it (after having deleted it)
+    ApiResponse<RuleDTO> response = new ApiResponse<>(rule);
+    return ResponseEntity
+            .ok(response);
   }
 
 }

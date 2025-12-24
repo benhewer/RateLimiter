@@ -61,7 +61,7 @@ public record RuleDTO(
 
   @Override
   public @NotNull String toString() {
-    return "Rule{" +
+    return "RuleDTO{" +
             "key='" + key + '\'' +
             ", algorithm=" + algorithm +
             ", parameters=" + parameters +
