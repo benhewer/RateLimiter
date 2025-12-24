@@ -21,7 +21,7 @@ public class RuleController {
     this.ruleService = ruleService;
   }
 
-  @PostMapping("/rule")
+  @PostMapping("/rules")
   public ResponseEntity<@NotNull ApiResponse<RuleDTO>> addRule(@RequestBody RuleDTO rule) {
     boolean success = ruleService.createRule(rule);
 
@@ -41,7 +41,7 @@ public class RuleController {
             .body(response);
   }
 
-  @GetMapping("/rule/{key}")
+  @GetMapping("/rules/{key}")
   public ResponseEntity<@NotNull ApiResponse<RuleDTO>> getRule(@PathVariable String key) {
     RuleDTO rule = ruleService.getRule(key);
 
@@ -59,7 +59,7 @@ public class RuleController {
             .ok(response);
   }
 
-  @PutMapping("/rule/{key}")
+  @PutMapping("/rules/{key}")
   public ResponseEntity<@NotNull ApiResponse<RuleDTO>> updateRule(@PathVariable String key, @RequestBody RuleDTO rule) {
     boolean success = ruleService.updateRule(key, rule);
 
@@ -77,7 +77,7 @@ public class RuleController {
             .ok(response);
   }
 
-  @DeleteMapping("/rule/{key}")
+  @DeleteMapping("/rules/{key}")
   public ResponseEntity<@NotNull ApiResponse<RuleDTO>> deleteRule(@PathVariable String key) {
     RuleDTO rule = ruleService.deleteRule(key);
 

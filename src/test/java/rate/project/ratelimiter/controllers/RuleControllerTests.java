@@ -53,7 +53,7 @@ public class RuleControllerTests {
     when(service.createRule(rule)).thenReturn(true);
 
     mockMvc.perform(
-                    post("/rule")
+                    post("/rules")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(ruleJson)
             )
@@ -66,7 +66,7 @@ public class RuleControllerTests {
     when(service.createRule(rule)).thenReturn(false);
 
     mockMvc.perform(
-                    post("/rule")
+                    post("/rules")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(ruleJson)
             )
@@ -78,7 +78,7 @@ public class RuleControllerTests {
     when(service.getRule(rule.key())).thenReturn(rule);
 
     mockMvc.perform(
-                    get("/rule/{key}", rule.key())
+                    get("/rules/{key}", rule.key())
             )
             .andExpect(status().isOk())
             .andExpect(content().json(responseJson));
@@ -89,7 +89,7 @@ public class RuleControllerTests {
     when(service.getRule(rule.key())).thenReturn(null);
 
     mockMvc.perform(
-                    get("/rule/{key}", rule.key())
+                    get("/rules/{key}", rule.key())
             )
             .andExpect(status().isBadRequest());
   }
@@ -99,7 +99,7 @@ public class RuleControllerTests {
     when(service.updateRule(rule.key(), rule)).thenReturn(true);
 
     mockMvc.perform(
-                    put("/rule/{key}", rule.key())
+                    put("/rules/{key}", rule.key())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(ruleJson)
             )
@@ -112,7 +112,7 @@ public class RuleControllerTests {
     when(service.updateRule(rule.key(), rule)).thenReturn(false);
 
     mockMvc.perform(
-                    put("/rule/{key}", rule.key())
+                    put("/rules/{key}", rule.key())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(ruleJson)
             )
@@ -124,7 +124,7 @@ public class RuleControllerTests {
     when(service.updateRule("incorrect:key", rule)).thenReturn(false);
 
     mockMvc.perform(
-                    put("/rule/{key}", "incorrect:key")
+                    put("/rules/{key}", "incorrect:key")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(ruleJson)
             )
@@ -136,7 +136,7 @@ public class RuleControllerTests {
     when(service.deleteRule(rule.key())).thenReturn(null);
 
     mockMvc.perform(
-                    delete("/rule/{key}", rule.key())
+                    delete("/rules/{key}", rule.key())
             )
             .andExpect(status().isBadRequest());
   }
@@ -146,7 +146,7 @@ public class RuleControllerTests {
     when(service.deleteRule(rule.key())).thenReturn(rule);
 
     mockMvc.perform(
-                    delete("/rule/{key}", rule.key())
+                    delete("/rules/{key}", rule.key())
             )
             .andExpect(status().isOk())
             .andExpect(content().json(responseJson));
