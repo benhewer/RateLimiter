@@ -2,7 +2,7 @@ package rate.project.ratelimiter.services.ratelimiters;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import rate.project.ratelimiter.dtos.CheckDTO;
+import rate.project.ratelimiter.dtos.CheckResponse;
 import rate.project.ratelimiter.dtos.parameters.AlgorithmParameters;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
 import rate.project.ratelimiter.entities.redis.RateLimiterState;
@@ -31,7 +31,7 @@ public final class TokenBucketRateLimiter implements RateLimiter {
   }
 
   @Override
-  public CheckDTO tryAcquire(String key, AlgorithmParameters parameters) {
+  public CheckResponse tryAcquire(String key, AlgorithmParameters parameters) {
     TokenBucketParameters params = (TokenBucketParameters) parameters;
     List<Long> result = redis.execute(
             redisScriptFactory.tokenBucketScript(),
@@ -45,7 +45,7 @@ public final class TokenBucketRateLimiter implements RateLimiter {
     long remaining = result.get(1);
     long retryAfterMillis = result.get(2);
 
-    return new CheckDTO(allowed, remaining, retryAfterMillis);
+    return new CheckResponse(allowed, remaining, retryAfterMillis);
   }
 
 }

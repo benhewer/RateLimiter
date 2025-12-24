@@ -8,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
-import rate.project.ratelimiter.dtos.CheckDTO;
+import rate.project.ratelimiter.dtos.CheckResponse;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.entities.redis.RateLimiterState;
@@ -59,8 +59,8 @@ public class TokenBucketRateLimiterTests {
             anyString()
     )).thenReturn(redisResult);
 
-    CheckDTO response = rateLimiter.tryAcquire(rule.key(), parameters);
-    assertEquals(new CheckDTO(true, 9, 0), response);
+    CheckResponse response = rateLimiter.tryAcquire(rule.key(), parameters);
+    assertEquals(new CheckResponse(true, 9, 0), response);
   }
 
 }

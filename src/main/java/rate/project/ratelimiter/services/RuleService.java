@@ -34,6 +34,7 @@ public class RuleService {
   }
 
   public RuleDTO getRule(String key) {
+    System.out.println(key);
     RuleEntity rule = ruleRepository.findById(key).orElse(null);
     if (rule == null) {
       return null;

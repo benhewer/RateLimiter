@@ -9,7 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import rate.project.ratelimiter.dtos.ApiResponse;
-import rate.project.ratelimiter.dtos.CheckDTO;
+import rate.project.ratelimiter.dtos.CheckResponse;
 import rate.project.ratelimiter.services.CheckService;
 import tools.jackson.databind.ObjectMapper;
 
@@ -32,13 +32,13 @@ public class CheckControllerTests {
   private CheckService checkService;
 
   private String key;
-  private CheckDTO check;
+  private CheckResponse check;
   private String responseJson;
 
   @BeforeAll
   void setup() {
     key = "user:potassiumlover33:post";
-    check = new CheckDTO(true, 9, 0);
+    check = new CheckResponse(true, 9, 0);
     responseJson = objectMapper.writeValueAsString(new ApiResponse<>(check));
   }
 

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import rate.project.ratelimiter.dtos.CheckDTO;
+import rate.project.ratelimiter.dtos.CheckResponse;
 import rate.project.ratelimiter.dtos.RuleDTO;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
@@ -44,13 +44,13 @@ public class CheckServiceTests {
 
   private final RuleEntity entity = new RuleEntity(dto.key(), dto.algorithm(), dto.parameters());
 
-  private final CheckDTO check = new CheckDTO(true, 9, 0);
+  private final CheckResponse check = new CheckResponse(true, 9, 0);
 
   @Test
   void whenKeyNotInDB_thenCheckAndUpdateShouldReturnNull() {
     when(ruleRepository.findById(entity.key())).thenReturn(Optional.empty());
 
-    CheckDTO rule = checkService.checkAndUpdate(entity.key());
+    CheckResponse rule = checkService.checkAndUpdate(entity.key());
     assertNull(rule);
 
     verify(rateLimiterRegistry, never()).getRateLimiter(any());
@@ -63,7 +63,7 @@ public class CheckServiceTests {
     when(rateLimiterRegistry.getRateLimiter(RateLimiterAlgorithm.TOKEN_BUCKET)).thenReturn(rateLimiter);
     when(rateLimiter.tryAcquire(entity.key(), entity.parameters())).thenReturn(check);
 
-    CheckDTO result = checkService.checkAndUpdate(entity.key());
+    CheckResponse result = checkService.checkAndUpdate(entity.key());
     assertEquals(check, result);
 
     verify(rateLimiterRegistry).getRateLimiter(RateLimiterAlgorithm.TOKEN_BUCKET);

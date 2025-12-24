@@ -8,13 +8,13 @@ package rate.project.ratelimiter.dtos;
  * @param remaining The number of requests remaining in the current window.
  * @param retryAfterMillis The number of milliseconds until the next window begins.
  */
-public record CheckDTO(boolean allowed, long remaining, long retryAfterMillis) {
+public record CheckResponse(boolean allowed, long remaining, long retryAfterMillis) {
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    CheckDTO that = (CheckDTO) o;
+    CheckResponse that = (CheckResponse) o;
     return that.allowed == allowed && that.remaining == remaining && that.retryAfterMillis == retryAfterMillis;
   }
 

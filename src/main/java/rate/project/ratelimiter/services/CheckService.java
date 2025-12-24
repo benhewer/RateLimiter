@@ -1,7 +1,7 @@
 package rate.project.ratelimiter.services;
 
 import org.springframework.stereotype.Service;
-import rate.project.ratelimiter.dtos.CheckDTO;
+import rate.project.ratelimiter.dtos.CheckResponse;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.registries.RateLimiterRegistry;
 import rate.project.ratelimiter.repositories.mongo.RuleRepository;
@@ -18,8 +18,10 @@ public class CheckService {
     this.ruleRepository = ruleRepository;
   }
 
-  public CheckDTO checkAndUpdate(String key) {
+  public CheckResponse checkAndUpdate(String key) {
+    System.out.println(key);
     RuleEntity rule = ruleRepository.findById(key).orElse(null);
+    System.out.println(rule);
     if (rule == null) {
       return null;
     }
