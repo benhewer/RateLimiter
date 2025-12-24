@@ -1,9 +1,10 @@
 package rate.project.ratelimiter.services.ratelimiters;
 
 
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -13,7 +14,6 @@ import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.entities.redis.RateLimiterState;
 import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
-import rate.project.ratelimiter.factories.RedisScriptFactory;
 
 import java.util.List;
 
@@ -24,12 +24,11 @@ import static org.mockito.Mockito.*;
 public class TokenBucketRateLimiterTests {
 
   @Mock
-  private RedisScriptFactory scriptFactory;
-
-  @Mock
   private RedisTemplate<String, RateLimiterState> redisTemplate;
 
-  @InjectMocks
+  @Mock
+  private RedisScript<@NotNull List<Long>> tokenBucketScript;
+
   private TokenBucketRateLimiter rateLimiter;
 
   private final TokenBucketParameters parameters = new TokenBucketParameters(10, 1);
@@ -40,26 +39,28 @@ public class TokenBucketRateLimiterTests {
           parameters
   );
 
-  @Test
-  void getAlgorithmShouldReturnCorrectAlgorithm() {
-    assertEquals(RateLimiterAlgorithm.TOKEN_BUCKET, rateLimiter.getAlgorithm());
+  @BeforeEach
+  void setUp() {
+    rateLimiter = new TokenBucketRateLimiter(
+            redisTemplate,
+            tokenBucketScript,
+            parameters
+    );
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   void tryAcquireShouldReturnRateLimiterResponse() {
     List<Long> redisResult = List.of(1L, 9L, 0L);
 
-    when(scriptFactory.tokenBucketScript()).thenReturn(mock(RedisScript.class));
     when(redisTemplate.execute(
-            eq(scriptFactory.tokenBucketScript()),
+            eq(tokenBucketScript),
             eq(List.of(rule.key())),
             eq(String.valueOf(parameters.capacity())),
             eq(String.valueOf(parameters.refillRate())),
             anyString()
     )).thenReturn(redisResult);
 
-    CheckResponse response = rateLimiter.tryAcquire(rule.key(), parameters);
+    CheckResponse response = rateLimiter.tryAcquire(rule.key());
     assertEquals(new CheckResponse(true, 9, 0), response);
   }
 

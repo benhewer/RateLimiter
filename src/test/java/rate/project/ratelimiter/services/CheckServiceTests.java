@@ -10,7 +10,7 @@ import rate.project.ratelimiter.dtos.RuleDTO;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
-import rate.project.ratelimiter.registries.RateLimiterRegistry;
+import rate.project.ratelimiter.factories.RateLimiterFactory;
 import rate.project.ratelimiter.repositories.mongo.RuleRepository;
 import rate.project.ratelimiter.services.ratelimiters.RateLimiter;
 
@@ -18,14 +18,13 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CheckServiceTests {
 
   @Mock
-  private RateLimiterRegistry rateLimiterRegistry;
+  private RateLimiterFactory rateLimiterFactory;
 
   @Mock
   private RuleRepository ruleRepository;
@@ -53,21 +52,21 @@ public class CheckServiceTests {
     CheckResponse rule = checkService.checkAndUpdate(entity.key());
     assertNull(rule);
 
-    verify(rateLimiterRegistry, never()).getRateLimiter(any());
-    verify(rateLimiter, never()).tryAcquire(any(), any());
+    verify(rateLimiterFactory, never()).getRateLimiter(anyString());
+    verify(rateLimiter, never()).tryAcquire(anyString());
   }
 
   @Test
   void whenKeyInDB_thenCheckAndUpdateShouldReturnCheck() {
     when(ruleRepository.findById(entity.key())).thenReturn(Optional.of(entity));
-    when(rateLimiterRegistry.getRateLimiter(RateLimiterAlgorithm.TOKEN_BUCKET)).thenReturn(rateLimiter);
-    when(rateLimiter.tryAcquire(entity.key(), entity.parameters())).thenReturn(check);
+    when(rateLimiterFactory.getRateLimiter(entity.key())).thenReturn(rateLimiter);
+    when(rateLimiter.tryAcquire(entity.key())).thenReturn(check);
 
     CheckResponse result = checkService.checkAndUpdate(entity.key());
     assertEquals(check, result);
 
-    verify(rateLimiterRegistry).getRateLimiter(RateLimiterAlgorithm.TOKEN_BUCKET);
-    verify(rateLimiter).tryAcquire(entity.key(), entity.parameters());
+    verify(rateLimiterFactory).getRateLimiter(entity.key());
+    verify(rateLimiter).tryAcquire(entity.key());
   }
 
 }

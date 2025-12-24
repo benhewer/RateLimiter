@@ -3,18 +3,18 @@ package rate.project.ratelimiter.services;
 import org.springframework.stereotype.Service;
 import rate.project.ratelimiter.dtos.CheckResponse;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
-import rate.project.ratelimiter.registries.RateLimiterRegistry;
+import rate.project.ratelimiter.factories.RateLimiterFactory;
 import rate.project.ratelimiter.repositories.mongo.RuleRepository;
 import rate.project.ratelimiter.services.ratelimiters.RateLimiter;
 
 @Service
 public class CheckService {
 
-  private final RateLimiterRegistry rateLimiterRegistry;
+  private final RateLimiterFactory rateLimiterFactory;
   private final RuleRepository ruleRepository;
 
-  public CheckService(RateLimiterRegistry rateLimiterRegistry, RuleRepository ruleRepository) {
-    this.rateLimiterRegistry = rateLimiterRegistry;
+  public CheckService(RateLimiterFactory rateLimiterFactory, RuleRepository ruleRepository) {
+    this.rateLimiterFactory = rateLimiterFactory;
     this.ruleRepository = ruleRepository;
   }
 
@@ -27,9 +27,12 @@ public class CheckService {
     }
 
     // Get the correct implementation of RateLimiter based on the rule's configured algorithm
-    RateLimiter rateLimiter = rateLimiterRegistry.getRateLimiter(rule.algorithm());
+    RateLimiter rateLimiter = rateLimiterFactory.getRateLimiter(key);
+    if (rateLimiter == null) {
+      return null;
+    }
 
-    return rateLimiter.tryAcquire(key, rule.parameters());
+    return rateLimiter.tryAcquire(key);
   }
 
 }

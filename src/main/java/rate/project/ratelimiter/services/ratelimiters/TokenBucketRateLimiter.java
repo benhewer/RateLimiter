@@ -1,43 +1,40 @@
 package rate.project.ratelimiter.services.ratelimiters;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.data.redis.core.script.RedisScript;
 import rate.project.ratelimiter.dtos.CheckResponse;
-import rate.project.ratelimiter.dtos.parameters.AlgorithmParameters;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
 import rate.project.ratelimiter.entities.redis.RateLimiterState;
-import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
-import rate.project.ratelimiter.factories.RedisScriptFactory;
 
 import java.util.List;
 
-@Component
 public final class TokenBucketRateLimiter implements RateLimiter {
 
   private final RedisTemplate<String, RateLimiterState> redis;
-  private final RedisScriptFactory redisScriptFactory;
+  private final RedisScript<@NotNull List<Long>> tokenBucketScript;
+
+  private final long capacity;
+  private final long refillRate;
 
   public TokenBucketRateLimiter(
           RedisTemplate<String, RateLimiterState> redis,
-          RedisScriptFactory redisScriptFactory
+          RedisScript<@NotNull List<Long>> tokenBucketScript,
+          TokenBucketParameters parameters
   ) {
     this.redis = redis;
-    this.redisScriptFactory = redisScriptFactory;
+    this.tokenBucketScript = tokenBucketScript;
+    this.capacity = parameters.capacity();
+    this.refillRate = parameters.refillRate();
   }
 
   @Override
-  public RateLimiterAlgorithm getAlgorithm() {
-    return RateLimiterAlgorithm.TOKEN_BUCKET;
-  }
-
-  @Override
-  public CheckResponse tryAcquire(String key, AlgorithmParameters parameters) {
-    TokenBucketParameters params = (TokenBucketParameters) parameters;
+  public CheckResponse tryAcquire(String key) {
     List<Long> result = redis.execute(
-            redisScriptFactory.tokenBucketScript(),
+            tokenBucketScript,
             List.of(key),
-            String.valueOf(params.capacity()),
-            String.valueOf(params.refillRate()),
+            String.valueOf(capacity),
+            String.valueOf(refillRate),
             String.valueOf(System.currentTimeMillis())
     );
 
