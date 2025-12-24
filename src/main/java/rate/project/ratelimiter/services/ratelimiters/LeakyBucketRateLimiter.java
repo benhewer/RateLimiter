@@ -2,31 +2,34 @@ package rate.project.ratelimiter.services.ratelimiters;
 
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.stereotype.Component;
-import rate.project.ratelimiter.dtos.RateLimiterResponse;
+import rate.project.ratelimiter.dtos.CheckDTO;
+import rate.project.ratelimiter.dtos.parameters.AlgorithmParameters;
+import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
 import rate.project.ratelimiter.factories.RedisScriptFactory;
-import rate.project.ratelimiter.repositories.mongo.RuleRepository;
 
 @Component
 public final class LeakyBucketRateLimiter implements RateLimiter {
 
   private final RedisOperations<String, String> redis;
   private final RedisScriptFactory redisScriptFactory;
-  private final RuleRepository ruleRepository;
 
   public LeakyBucketRateLimiter(
           RedisOperations<String, String> redis,
-          RedisScriptFactory rescriptFactory,
-          RuleRepository ruleRepository
+          RedisScriptFactory rescriptFactory
   ) {
     this.redis = redis;
     this.redisScriptFactory = rescriptFactory;
-    this.ruleRepository = ruleRepository;
   }
 
   @Override
-  public RateLimiterResponse tryAcquire(String key) {
+  public RateLimiterAlgorithm getAlgorithm() {
+    return RateLimiterAlgorithm.LEAKY_BUCKET;
+  }
+
+  @Override
+  public CheckDTO tryAcquire(String key, AlgorithmParameters parameters) {
     // TODO: Run Lua script
-    return new RateLimiterResponse(false, 0, 0);
+    return new CheckDTO(false, 0, 0);
   }
 
 }

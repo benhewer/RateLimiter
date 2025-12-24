@@ -6,20 +6,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.RedisOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
-import rate.project.ratelimiter.dtos.RateLimiterResponse;
+import rate.project.ratelimiter.dtos.CheckDTO;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
+import rate.project.ratelimiter.entities.redis.RateLimiterState;
 import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
 import rate.project.ratelimiter.factories.RedisScriptFactory;
-import rate.project.ratelimiter.repositories.mongo.RuleRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,51 +27,40 @@ public class TokenBucketRateLimiterTests {
   private RedisScriptFactory scriptFactory;
 
   @Mock
-  private RedisOperations<String, String> redis;
-
-  @Mock
-  private RuleRepository ruleRepository;
+  private RedisTemplate<String, RateLimiterState> redisTemplate;
 
   @InjectMocks
   private TokenBucketRateLimiter rateLimiter;
 
+  private final TokenBucketParameters parameters = new TokenBucketParameters(10, 1);
+
+  private final RuleEntity rule = new RuleEntity(
+          "user:potassiumlover33:login",
+          RateLimiterAlgorithm.TOKEN_BUCKET,
+          parameters
+  );
+
   @Test
-  @SuppressWarnings("unchecked")
-  void whenRuleInDB_thenTryAcquireShouldReturnRateLimiterResponse() {
-    RuleEntity ruleEntity = new RuleEntity(
-            "user:potassiumlover33:login",
-            RateLimiterAlgorithm.TOKEN_BUCKET,
-            new TokenBucketParameters(10, 1));
-
-    List<Long> redisResult = List.of(1L, 9L, 0L);
-
-    // Mock the rule in db
-    when(ruleRepository.findById(ruleEntity.key())).thenReturn(Optional.of(ruleEntity));
-    when(scriptFactory.tokenBucketScript()).thenReturn(mock(RedisScript.class));
-    when(redis.execute(
-            eq(scriptFactory.tokenBucketScript()),
-            eq(List.of(ruleEntity.key())),
-            eq(10),
-            eq(1),
-            anyLong()
-    )).thenReturn(redisResult);
-
-    RateLimiterResponse response = rateLimiter.tryAcquire("user:potassiumlover33:login");
-    assertEquals(new RateLimiterResponse(true, 9, 0),  response);
+  void getAlgorithmShouldReturnCorrectAlgorithm() {
+    assertEquals(RateLimiterAlgorithm.TOKEN_BUCKET, rateLimiter.getAlgorithm());
   }
 
   @Test
-  void whenRuleNotInDB_thenTryAcquireShouldReturnNull() {
-    RuleEntity ruleEntity = new RuleEntity(
-            "user:potassiumlover33:login",
-            RateLimiterAlgorithm.TOKEN_BUCKET,
-            new TokenBucketParameters(10, 1));
+  @SuppressWarnings("unchecked")
+  void tryAcquireShouldReturnRateLimiterResponse() {
+    List<Long> redisResult = List.of(1L, 9L, 0L);
 
-    // Mock the rule not in db
-    when(ruleRepository.findById(ruleEntity.key())).thenReturn(Optional.empty());
+    when(scriptFactory.tokenBucketScript()).thenReturn(mock(RedisScript.class));
+    when(redisTemplate.execute(
+            eq(scriptFactory.tokenBucketScript()),
+            eq(List.of(rule.key())),
+            eq(String.valueOf(parameters.capacity())),
+            eq(String.valueOf(parameters.refillRate())),
+            anyString()
+    )).thenReturn(redisResult);
 
-    RateLimiterResponse response = rateLimiter.tryAcquire("user:potassiumlover33:login");
-    assertNull(response);
+    CheckDTO response = rateLimiter.tryAcquire(rule.key(), parameters);
+    assertEquals(new CheckDTO(true, 9, 0), response);
   }
 
 }

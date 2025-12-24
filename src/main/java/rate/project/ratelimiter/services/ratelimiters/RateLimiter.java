@@ -1,6 +1,8 @@
 package rate.project.ratelimiter.services.ratelimiters;
 
-import rate.project.ratelimiter.dtos.RateLimiterResponse;
+import rate.project.ratelimiter.dtos.CheckDTO;
+import rate.project.ratelimiter.dtos.parameters.AlgorithmParameters;
+import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
 
 /**
  * Represents a rate limiter.
@@ -8,6 +10,8 @@ import rate.project.ratelimiter.dtos.RateLimiterResponse;
  */
 public interface RateLimiter {
 
-  RateLimiterResponse tryAcquire(String key);
+  RateLimiterAlgorithm getAlgorithm();
+
+  CheckDTO tryAcquire(String key, AlgorithmParameters parameters);
 
 }

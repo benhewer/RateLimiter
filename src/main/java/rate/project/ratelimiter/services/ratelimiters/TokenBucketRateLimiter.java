@@ -2,12 +2,12 @@ package rate.project.ratelimiter.services.ratelimiters;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import rate.project.ratelimiter.dtos.RateLimiterResponse;
+import rate.project.ratelimiter.dtos.CheckDTO;
+import rate.project.ratelimiter.dtos.parameters.AlgorithmParameters;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
-import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.entities.redis.RateLimiterState;
+import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
 import rate.project.ratelimiter.factories.RedisScriptFactory;
-import rate.project.ratelimiter.repositories.mongo.RuleRepository;
 
 import java.util.List;
 
@@ -16,32 +16,28 @@ public final class TokenBucketRateLimiter implements RateLimiter {
 
   private final RedisTemplate<String, RateLimiterState> redis;
   private final RedisScriptFactory redisScriptFactory;
-  private final RuleRepository ruleRepository;
 
   public TokenBucketRateLimiter(
           RedisTemplate<String, RateLimiterState> redis,
-          RedisScriptFactory redisScriptFactory,
-          RuleRepository ruleRepository
+          RedisScriptFactory redisScriptFactory
   ) {
     this.redis = redis;
     this.redisScriptFactory = redisScriptFactory;
-    this.ruleRepository = ruleRepository;
   }
 
   @Override
-  public RateLimiterResponse tryAcquire(String key) {
-    RuleEntity rule = ruleRepository.findById(key).orElse(null);
-    if (rule == null) {
-      return null;
-    }
+  public RateLimiterAlgorithm getAlgorithm() {
+    return RateLimiterAlgorithm.TOKEN_BUCKET;
+  }
 
-    TokenBucketParameters parameters = (TokenBucketParameters) rule.parameters();
-
+  @Override
+  public CheckDTO tryAcquire(String key, AlgorithmParameters parameters) {
+    TokenBucketParameters params = (TokenBucketParameters) parameters;
     List<Long> result = redis.execute(
             redisScriptFactory.tokenBucketScript(),
             List.of(key),
-            String.valueOf(parameters.capacity()),
-            String.valueOf(parameters.refillRate()),
+            String.valueOf(params.capacity()),
+            String.valueOf(params.refillRate()),
             String.valueOf(System.currentTimeMillis())
     );
 
@@ -49,7 +45,7 @@ public final class TokenBucketRateLimiter implements RateLimiter {
     long remaining = result.get(1);
     long retryAfterMillis = result.get(2);
 
-    return new RateLimiterResponse(allowed, remaining, retryAfterMillis);
+    return new CheckDTO(allowed, remaining, retryAfterMillis);
   }
 
 }
