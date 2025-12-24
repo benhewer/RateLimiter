@@ -1,21 +1,27 @@
 package rate.project.ratelimiter.lua;
 
-import org.junit.jupiter.api.Test;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import rate.project.ratelimiter.config.TestRedisConfig;
 import rate.project.ratelimiter.entities.redis.RateLimiterState;
 import rate.project.ratelimiter.factories.RedisScriptFactory;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Import(TestRedisConfig.class)
-public class TokenBucketLuaTests {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class RateLimiterLuaTests {
 
   @Autowired
   private RedisScriptFactory redisScriptFactory;
@@ -23,10 +29,19 @@ public class TokenBucketLuaTests {
   @Autowired
   private RedisTemplate<String, RateLimiterState> testRedisTemplate;
 
-  @Test
-  void whenTokenAvailable_thenScriptShouldCorrectlyUpdateState() {
-    List<Long> result = testRedisTemplate.execute(
+  // Provides all scripts to be tested with below methods
+  private Stream<RedisScript<@NotNull List<Long>>> rateLimiterScripts() {
+    return Stream.of(
             redisScriptFactory.tokenBucketScript(),
+            redisScriptFactory.leakyBucketScript()
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("rateLimiterScripts")
+  void whenTokenAvailable_thenScriptShouldCorrectlyUpdateState(RedisScript<@NotNull List<Long>> rateLimiterScript) {
+    List<Long> result = testRedisTemplate.execute(
+            rateLimiterScript,
             List.of("user:potassiumlover33:login"),
             String.valueOf(10),
             String.valueOf(1),
@@ -39,12 +54,13 @@ public class TokenBucketLuaTests {
     assertEquals(0L, result.get(2));
   }
 
-  @Test
-  void whenTokenNotAvailable_thenScriptShouldCorrectlyUpdateState() {
+  @ParameterizedTest
+  @MethodSource("rateLimiterScripts")
+  void whenTokenNotAvailable_thenScriptShouldCorrectlyUpdateState(RedisScript<@NotNull List<Long>> rateLimiterScript) {
     // After executing script twice with capacity 1, the allowed bool should be false
 
     testRedisTemplate.execute(
-            redisScriptFactory.tokenBucketScript(),
+            rateLimiterScript,
             List.of("user:potassiumlover33:post"),
             String.valueOf(1),
             String.valueOf(1),
@@ -52,7 +68,7 @@ public class TokenBucketLuaTests {
     );
 
     List<Long> result = testRedisTemplate.execute(
-            redisScriptFactory.tokenBucketScript(),
+            rateLimiterScript,
             List.of("user:potassiumlover33:post"),
             String.valueOf(1),
             String.valueOf(1),

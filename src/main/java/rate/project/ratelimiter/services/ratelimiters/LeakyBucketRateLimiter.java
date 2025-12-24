@@ -30,8 +30,19 @@ public final class LeakyBucketRateLimiter implements RateLimiter {
 
   @Override
   public CheckResponse tryAcquire(String key) {
-    // TODO: Run Lua script
-    return new CheckResponse(false, 0, 0);
+    List<Long> result = redis.execute(
+            leakyBucketScript,
+            List.of(key),
+            String.valueOf(capacity),
+            String.valueOf(outflowRate),
+            String.valueOf(System.currentTimeMillis())
+    );
+
+    boolean allowed = result.get(0) == 1;
+    long remaining = result.get(1);
+    long retryAfterMillis = result.get(2);
+
+    return new CheckResponse(allowed, remaining, retryAfterMillis);
   }
 
 }

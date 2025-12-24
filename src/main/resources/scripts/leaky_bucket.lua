@@ -4,9 +4,9 @@
 
 local key = KEYS[1]
 
-local capacity = ARGV[1]
-local outflowRate = ARGV[2]
-local now = ARGV[3]
+local capacity = tonumber(ARGV[1])
+local outflowRate = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
 
 -- If the key is not present, water = 0, otherwise set tokens to the redis value
 local water = tonumber(redis.call('HGET', key, 'water')) or 0
@@ -17,12 +17,12 @@ local elapsed = now - lastRefillTime
 
 local waterLost = elapsed * outflowRate / 1000
 if waterLost >= 1 then
-    tokens = math.min(water - waterLost, capacity)
+    water = math.max(water - waterLost, 0)
     redis.call('HSET', key, 'lastRefill', now)
 end
 
 -- Add one to water level if possible
-if water < capacity then
+if water <= capacity - 1 then
     water = water + 1
     redis.call('HSET', key, 'water', water)
     local remaining = capacity - water
