@@ -1,47 +1,41 @@
-package rate.project.ratelimiter.registries;
+package rate.project.ratelimiter.factories;
 
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import rate.project.ratelimiter.config.CacheConfig;
+import rate.project.ratelimiter.config.TestMongoConfig;
 import rate.project.ratelimiter.dtos.parameters.LeakyBucketParameters;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
-import rate.project.ratelimiter.factories.RateLimiterFactory;
-import rate.project.ratelimiter.factories.RedisScriptFactory;
 import rate.project.ratelimiter.repositories.mongo.RuleRepository;
 import rate.project.ratelimiter.services.ratelimiters.LeakyBucketRateLimiter;
 import rate.project.ratelimiter.services.ratelimiters.RateLimiter;
 import rate.project.ratelimiter.services.ratelimiters.TokenBucketRateLimiter;
 
-import java.util.List;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+// Spring boot is loaded to fully test the cache
+@SpringBootTest
+@Import({CacheConfig.class, TestMongoConfig.class})
 public class RateLimiterFactoryTests {
 
-  @Mock
+  @MockitoSpyBean
   private RuleRepository ruleRepository;
 
-  @Mock
-  private RedisScriptFactory redisScriptFactory;
-
-  @Mock
-  private RedisScript<@NotNull List<Long>> tokenBucketScript;
-
-  @Mock
-  private RedisScript<@NotNull List<Long>> leakyBucketScript;
-
-  @InjectMocks
+  @Autowired
   private RateLimiterFactory rateLimiterFactory;
+
+  @Autowired
+  private CacheManager cacheManager;
 
   private final RuleEntity tokenBucketEntity = new RuleEntity(
           "user:potassiumlover33:login",
@@ -55,10 +49,16 @@ public class RateLimiterFactoryTests {
           new LeakyBucketParameters(10, 1)
   );
 
+  @BeforeEach
+  void clearCache() {
+    Cache cache = cacheManager.getCache("RateLimiterCache");
+    if (cache != null) {
+      cache.clear();
+    }
+  }
+
   @Test
   void whenKeyNotFound_thenGetRateLimiterShouldReturnNull() {
-    when(ruleRepository.findById(tokenBucketEntity.key())).thenReturn(Optional.empty());
-
     RateLimiter nullRateLimiter = rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
     assertNull(nullRateLimiter);
   }
@@ -66,20 +66,24 @@ public class RateLimiterFactoryTests {
   @Test
   void whenKeyFound_thenGetRateLimiterShouldReturnCorrectRateLimiter() {
     // Token Bucket
-
-    when(ruleRepository.findById(tokenBucketEntity.key())).thenReturn(Optional.of(tokenBucketEntity));
-    when(redisScriptFactory.tokenBucketScript()).thenReturn(tokenBucketScript);
-
+    ruleRepository.save(tokenBucketEntity);
     RateLimiter tokenBucketRateLimiter = rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
     assertEquals(TokenBucketRateLimiter.class, tokenBucketRateLimiter.getClass());
 
     // Leaky Bucket
-
-    when(ruleRepository.findById(leakyBucketEntity.key())).thenReturn(Optional.of(leakyBucketEntity));
-    when(redisScriptFactory.leakyBucketScript()).thenReturn(leakyBucketScript);
-
+    ruleRepository.save(leakyBucketEntity);
     RateLimiter leakyBucketRateLimiter = rateLimiterFactory.getRateLimiter(leakyBucketEntity.key());
     assertEquals(LeakyBucketRateLimiter.class, leakyBucketRateLimiter.getClass());
+  }
+
+  @Test
+  void shouldOnlyQueryMongoOnceForSameRule() {
+    ruleRepository.save(tokenBucketEntity);
+
+    rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
+    rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
+
+    verify(ruleRepository).findById(anyString());
   }
 
 }

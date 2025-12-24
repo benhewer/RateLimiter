@@ -1,5 +1,6 @@
 package rate.project.ratelimiter.factories;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import rate.project.ratelimiter.dtos.parameters.LeakyBucketParameters;
@@ -28,6 +29,7 @@ public class RateLimiterFactory {
     this.scripts = scripts;
   }
 
+  @Cacheable(value = "RateLimiterCache", key = "#key", unless = "#result == null")
   public RateLimiter getRateLimiter(String key) {
     RuleEntity rule = ruleRepository.findById(key).orElse(null);
     if (rule == null) {
@@ -35,8 +37,12 @@ public class RateLimiterFactory {
     }
 
     return switch (rule.algorithm()) {
-      case TOKEN_BUCKET -> new TokenBucketRateLimiter(redis, scripts.tokenBucketScript(), (TokenBucketParameters) rule.parameters());
-      case LEAKY_BUCKET -> new LeakyBucketRateLimiter(redis, scripts.leakyBucketScript(), (LeakyBucketParameters) rule.parameters());
+      case TOKEN_BUCKET -> new TokenBucketRateLimiter(
+              redis, scripts.tokenBucketScript(), (TokenBucketParameters) rule.parameters()
+      );
+      case LEAKY_BUCKET -> new LeakyBucketRateLimiter(
+              redis, scripts.leakyBucketScript(), (LeakyBucketParameters) rule.parameters()
+      );
     };
   }
 }
