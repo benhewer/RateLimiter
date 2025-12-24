@@ -6,9 +6,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
 import rate.project.ratelimiter.dtos.RuleDTO;
 import rate.project.ratelimiter.dtos.parameters.LeakyBucketParameters;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
+import rate.project.ratelimiter.entities.redis.RateLimiterState;
 import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
 import rate.project.ratelimiter.mappers.RuleMapper;
 import rate.project.ratelimiter.repositories.mongo.RuleRepository;
@@ -25,6 +27,8 @@ public class RuleServiceTests {
   private RuleRepository ruleRepository;
   @Mock
   private RuleMapper mapper;
+  @Mock
+  private RedisTemplate<String, RateLimiterState> redisTemplate;
 
   @InjectMocks
   private RuleService service;
@@ -94,6 +98,8 @@ public class RuleServiceTests {
 
     RuleEntity ruleEntity = captor.getValue();
     assertEquals(entity, ruleEntity);
+
+    verify(redisTemplate).convertAndSend("rate-limiter-invalidation", dto.key());
   }
 
   @Test
@@ -143,6 +149,8 @@ public class RuleServiceTests {
 
     // Ensure ruleRepository.deleteById was called once
     verify(ruleRepository).deleteById(entity.key());
+
+    verify(redisTemplate).convertAndSend("rate-limiter-invalidation", dto.key());
   }
 
 }

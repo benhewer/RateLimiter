@@ -1,7 +1,9 @@
 package rate.project.ratelimiter.services;
 
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import rate.project.ratelimiter.dtos.RuleDTO;
+import rate.project.ratelimiter.entities.redis.RateLimiterState;
 import rate.project.ratelimiter.mappers.RuleMapper;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.repositories.mongo.RuleRepository;
@@ -14,10 +16,12 @@ public class RuleService {
 
   private final RuleRepository ruleRepository;
   private final RuleMapper mapper;
+  private final RedisTemplate<String, RateLimiterState> redisTemplate;
 
-  public RuleService(RuleRepository ruleRepository, RuleMapper mapper) {
+  public RuleService(RuleRepository ruleRepository, RuleMapper mapper, RedisTemplate<String, RateLimiterState> redisTemplate) {
     this.ruleRepository = ruleRepository;
     this.mapper = mapper;
+    this.redisTemplate = redisTemplate;
   }
 
   public boolean createRule(RuleDTO ruleDTO) {
@@ -55,6 +59,9 @@ public class RuleService {
       return false;
     }
 
+    // Clear from cache
+    redisTemplate.convertAndSend("rate-limiter-invalidation", key);
+
     ruleRepository.save(rule);
     return true;
   }
@@ -64,6 +71,9 @@ public class RuleService {
     if (rule == null) {
       return null;
     }
+
+    // Clear from cache
+    redisTemplate.convertAndSend("rate-limiter-invalidation", key);
 
     ruleRepository.deleteById(key);
     return mapper.toDTO(rule);

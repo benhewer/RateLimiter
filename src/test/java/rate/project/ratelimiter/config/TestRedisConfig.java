@@ -4,6 +4,7 @@ import com.redis.testcontainers.RedisContainer;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -36,6 +37,7 @@ public class TestRedisConfig {
   }
 
   @Bean
+  @Primary
   public RedisTemplate<String, RateLimiterState> testRedisTemplate(RedisConnectionFactory connectionFactory) {
     RedisTemplate<String, RateLimiterState> template = new RedisTemplate<>();
     template.setConnectionFactory(connectionFactory);

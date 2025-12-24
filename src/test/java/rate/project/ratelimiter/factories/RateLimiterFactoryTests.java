@@ -10,11 +10,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import rate.project.ratelimiter.config.CacheConfig;
 import rate.project.ratelimiter.config.TestMongoConfig;
+import rate.project.ratelimiter.dtos.RuleDTO;
 import rate.project.ratelimiter.dtos.parameters.LeakyBucketParameters;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
-import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
 import rate.project.ratelimiter.repositories.mongo.RuleRepository;
+import rate.project.ratelimiter.services.RuleService;
 import rate.project.ratelimiter.services.ratelimiters.LeakyBucketRateLimiter;
 import rate.project.ratelimiter.services.ratelimiters.RateLimiter;
 import rate.project.ratelimiter.services.ratelimiters.TokenBucketRateLimiter;
@@ -32,18 +33,21 @@ public class RateLimiterFactoryTests {
   private RuleRepository ruleRepository;
 
   @Autowired
+  private RuleService ruleService;
+
+  @Autowired
   private RateLimiterFactory rateLimiterFactory;
 
   @Autowired
   private CacheManager cacheManager;
 
-  private final RuleEntity tokenBucketEntity = new RuleEntity(
+  private final RuleDTO tokenBucketEntity = new RuleDTO(
           "user:potassiumlover33:login",
           RateLimiterAlgorithm.TOKEN_BUCKET,
           new TokenBucketParameters(10, 1)
   );
 
-  private final RuleEntity leakyBucketEntity = new RuleEntity(
+  private final RuleDTO leakyBucketEntity = new RuleDTO(
           "user:potassiumlover33:post",
           RateLimiterAlgorithm.LEAKY_BUCKET,
           new LeakyBucketParameters(10, 1)
@@ -66,24 +70,46 @@ public class RateLimiterFactoryTests {
   @Test
   void whenKeyFound_thenGetRateLimiterShouldReturnCorrectRateLimiter() {
     // Token Bucket
-    ruleRepository.save(tokenBucketEntity);
+    ruleService.createRule(tokenBucketEntity);
     RateLimiter tokenBucketRateLimiter = rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
     assertEquals(TokenBucketRateLimiter.class, tokenBucketRateLimiter.getClass());
 
     // Leaky Bucket
-    ruleRepository.save(leakyBucketEntity);
+    ruleService.createRule(leakyBucketEntity);
     RateLimiter leakyBucketRateLimiter = rateLimiterFactory.getRateLimiter(leakyBucketEntity.key());
     assertEquals(LeakyBucketRateLimiter.class, leakyBucketRateLimiter.getClass());
   }
 
   @Test
   void shouldOnlyQueryMongoOnceForSameRule() {
-    ruleRepository.save(tokenBucketEntity);
+    ruleService.createRule(tokenBucketEntity);
 
     rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
     rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
 
+    // Ensure only query DB once
     verify(ruleRepository).findById(anyString());
+  }
+
+  @Test
+  void whenRuleIsDeleted_thenRuleShouldBeEvictedFromCache() {
+    ruleService.createRule(tokenBucketEntity);
+    rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
+    ruleService.deleteRule(tokenBucketEntity.key());
+
+    RateLimiter rateLimiter = rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
+    assertNull(rateLimiter);
+  }
+
+  @Test
+  void whenRuleIsUpdated_thenRuleShouldBeEvictedFromCache() {
+    ruleService.createRule(tokenBucketEntity);
+    rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
+    ruleService.updateRule(tokenBucketEntity.key(), tokenBucketEntity);
+
+    rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
+
+    verify(ruleRepository, times(2)).findById(anyString());
   }
 
 }
