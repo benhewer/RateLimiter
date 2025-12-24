@@ -14,13 +14,17 @@ local tokens = tonumber(redis.call('HGET', key, 'tokens')) or capacity
 -- Compute elapsed time and refill tokens
 local lastRefillTime = tonumber(redis.call('HGET', key, 'lastRefill') or 0)
 local elapsed = now - lastRefillTime
-tokens = math.min(tokens + (elapsed * refillRate / 1000), capacity)
+
+local tokensGained = elapsed * refillRate / 1000
+if tokensGained >= 1 then
+    tokens = math.min(tokens + tokensGained, capacity)
+    redis.call('HSET', key, 'lastRefill', now)
+end
 
 -- Consume one token if available
 if tokens >= 1 then
 	tokens = tokens - 1
 	redis.call('HSET', key, 'tokens', tokens)
-	redis.call('HSET', key, 'lastRefill', now)
 	return {
         1,           -- allowed (true)
         tokens,      -- remaining
