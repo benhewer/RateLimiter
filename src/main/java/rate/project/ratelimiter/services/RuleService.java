@@ -1,5 +1,6 @@
 package rate.project.ratelimiter.services;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import rate.project.ratelimiter.dtos.RuleDTO;
@@ -18,17 +19,21 @@ public class RuleService {
   private final RuleMapper mapper;
   private final RedisTemplate<String, RateLimiterState> redisTemplate;
 
-  public RuleService(RuleRepository ruleRepository, RuleMapper mapper, RedisTemplate<String, RateLimiterState> redisTemplate) {
+  public RuleService(
+          RuleRepository ruleRepository,
+          RuleMapper mapper,
+          RedisTemplate<String, RateLimiterState> redisTemplate
+  ) {
     this.ruleRepository = ruleRepository;
     this.mapper = mapper;
     this.redisTemplate = redisTemplate;
   }
 
-  public boolean createRule(RuleDTO ruleDTO) {
-    RuleEntity rule = mapper.toEntity(ruleDTO);
+  public boolean createRule(String projectId, RuleDTO ruleDTO) {
+    RuleEntity rule = mapper.toEntity(ruleDTO, projectId);
 
     // Check if the rule already exists
-    if (ruleRepository.existsById(rule.key())) {
+    if (ruleRepository.existsByProjectIdAndRuleKey(rule.projectId(), rule.ruleKey())) {
       return false;
     }
 
@@ -37,45 +42,53 @@ public class RuleService {
     return true;
   }
 
-  public RuleDTO getRule(String key) {
-    System.out.println(key);
-    RuleEntity rule = ruleRepository.findById(key).orElse(null);
+  public RuleDTO getRule(String projectId, String ruleKey) {
+    RuleEntity rule = ruleRepository.findByProjectIdAndRuleKey(projectId, ruleKey).orElse(null);
     if (rule == null) {
       return null;
     }
     return mapper.toDTO(rule);
   }
 
-  public boolean updateRule(String key, RuleDTO ruleDTO) {
-    RuleEntity rule = mapper.toEntity(ruleDTO);
-
+  @CacheEvict(value = "RateLimiterCache", key = "#projectId + ':' + #ruleKey")
+  public boolean updateRule(String projectId, String ruleKey, RuleDTO ruleDTO) {
     // Ensure the keys are consistent
-    if (!key.equals(rule.key())) {
+    if (!ruleDTO.ruleKey().equals(ruleKey)) {
       return false;
     }
 
-    // Check if the rule doesn't exist yet
-    if (!ruleRepository.existsById(key)) {
+    RuleEntity rule = ruleRepository.findByProjectIdAndRuleKey(projectId, ruleKey).orElse(null);
+    if (rule == null) {
       return false;
     }
 
-    // Clear from cache
-    redisTemplate.convertAndSend("rate-limiter-invalidation", key);
+    // New rule created with updated variables and original id
+    RuleEntity updatedRule = new RuleEntity(
+            rule.id(),
+            projectId,
+            ruleDTO.ruleKey(),
+            ruleDTO.algorithm(),
+            ruleDTO.parameters()
+    );
 
-    ruleRepository.save(rule);
+    // Clear from cache (for distributed systems)
+    redisTemplate.convertAndSend("rate-limiter-invalidation", projectId + ":" + ruleKey);
+
+    ruleRepository.save(updatedRule);
     return true;
   }
 
-  public RuleDTO deleteRule(String key) {
-    RuleEntity rule = ruleRepository.findById(key).orElse(null);
+  @CacheEvict(value = "RateLimiterCache", key = "#projectId + ':' + #ruleKey")
+  public RuleDTO deleteRule(String projectId, String ruleKey) {
+    RuleEntity rule = ruleRepository.findByProjectIdAndRuleKey(projectId, ruleKey).orElse(null);
     if (rule == null) {
       return null;
     }
 
-    // Clear from cache
-    redisTemplate.convertAndSend("rate-limiter-invalidation", key);
+    // Clear from cache (for distributed systems)
+    redisTemplate.convertAndSend("rate-limiter-invalidation", projectId + ":" + rule.ruleKey());
 
-    ruleRepository.deleteById(key);
+    ruleRepository.deleteByProjectIdAndRuleKey(projectId, ruleKey);
     return mapper.toDTO(rule);
   }
 

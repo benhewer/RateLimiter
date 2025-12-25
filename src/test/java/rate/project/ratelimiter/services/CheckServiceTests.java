@@ -6,15 +6,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import rate.project.ratelimiter.dtos.CheckResponse;
-import rate.project.ratelimiter.dtos.RuleDTO;
-import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
-import rate.project.ratelimiter.entities.mongo.RuleEntity;
-import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
 import rate.project.ratelimiter.factories.RateLimiterFactory;
-import rate.project.ratelimiter.repositories.mongo.RuleRepository;
 import rate.project.ratelimiter.services.ratelimiters.RateLimiter;
-
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -27,46 +20,38 @@ public class CheckServiceTests {
   private RateLimiterFactory rateLimiterFactory;
 
   @Mock
-  private RuleRepository ruleRepository;
-
-  @Mock
   private RateLimiter rateLimiter;
 
   @InjectMocks
   private CheckService checkService;
 
-  private final RuleDTO dto = new RuleDTO(
-          "user:potassiumlover33:login",
-          RateLimiterAlgorithm.TOKEN_BUCKET,
-          new TokenBucketParameters(10, 1)
-  );
-
-  private final RuleEntity entity = new RuleEntity(dto.key(), dto.algorithm(), dto.parameters());
+  private final String projectId = "example";
+  private final String ruleKey = "login";
+  private final String userKey = "potassiumlover33";
 
   private final CheckResponse check = new CheckResponse(true, 9, 0);
 
   @Test
   void whenKeyNotInDB_thenCheckAndUpdateShouldReturnNull() {
-    when(ruleRepository.findById(entity.key())).thenReturn(Optional.empty());
-
-    CheckResponse rule = checkService.checkAndUpdate(entity.key());
+    // Mock when the key is not in DB
+    when(rateLimiterFactory.getRateLimiter(projectId, ruleKey)).thenReturn(null);
+    CheckResponse rule = checkService.checkAndUpdate(projectId, ruleKey, userKey);
     assertNull(rule);
 
-    verify(rateLimiterFactory, never()).getRateLimiter(anyString());
+    verify(rateLimiterFactory).getRateLimiter(anyString(), anyString());
     verify(rateLimiter, never()).tryAcquire(anyString());
   }
 
   @Test
   void whenKeyInDB_thenCheckAndUpdateShouldReturnCheck() {
-    when(ruleRepository.findById(entity.key())).thenReturn(Optional.of(entity));
-    when(rateLimiterFactory.getRateLimiter(entity.key())).thenReturn(rateLimiter);
-    when(rateLimiter.tryAcquire(entity.key())).thenReturn(check);
+    when(rateLimiterFactory.getRateLimiter(projectId, ruleKey)).thenReturn(rateLimiter);
+    when(rateLimiter.tryAcquire(userKey)).thenReturn(check);
 
-    CheckResponse result = checkService.checkAndUpdate(entity.key());
+    CheckResponse result = checkService.checkAndUpdate(projectId, ruleKey, userKey);
     assertEquals(check, result);
 
-    verify(rateLimiterFactory).getRateLimiter(entity.key());
-    verify(rateLimiter).tryAcquire(entity.key());
+    verify(rateLimiterFactory).getRateLimiter(projectId, ruleKey);
+    verify(rateLimiter).tryAcquire(userKey);
   }
 
 }

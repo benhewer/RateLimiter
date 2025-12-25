@@ -8,6 +8,6 @@ import rate.project.ratelimiter.dtos.CheckResponse;
  */
 public interface RateLimiter {
 
-  CheckResponse tryAcquire(String key);
+  CheckResponse tryAcquire(String userKey);
 
 }

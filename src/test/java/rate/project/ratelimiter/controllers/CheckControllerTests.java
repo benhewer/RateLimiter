@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import rate.project.ratelimiter.dtos.ApiResponse;
+import rate.project.ratelimiter.dtos.CheckRequest;
 import rate.project.ratelimiter.dtos.CheckResponse;
 import rate.project.ratelimiter.services.CheckService;
 import tools.jackson.databind.ObjectMapper;
@@ -31,37 +32,39 @@ public class CheckControllerTests {
   @MockitoBean
   private CheckService checkService;
 
-  private String key;
-  private CheckResponse check;
+  private final String projectId = "example";
+  private final String ruleKey = "post";
+  private final String userKey = "user";
+  private final CheckResponse check = new CheckResponse(true, 9, 0);
+  private String userKeyJson;
   private String responseJson;
 
   @BeforeAll
-  void setup() {
-    key = "user:potassiumlover33:post";
-    check = new CheckResponse(true, 9, 0);
+  void setUp() {
+    userKeyJson = objectMapper.writeValueAsString(new CheckRequest(userKey));
     responseJson = objectMapper.writeValueAsString(new ApiResponse<>(check));
   }
 
   @Test
   void whenKeyNotInDB_thenCheckAndUpdateReturnsNull() throws Exception {
-    when(checkService.checkAndUpdate(key)).thenReturn(null);
+    when(checkService.checkAndUpdate(projectId, ruleKey, userKey)).thenReturn(null);
 
     mockMvc.perform(
-                    post("/check")
+                    post("/projects/{projectId}/rules/{ruleKey}/check", projectId, ruleKey)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(key)
+                            .content(userKeyJson)
             )
             .andExpect(status().isBadRequest());
   }
 
   @Test
   void whenKeyInDB_thenCheckAndUpdateReturnsCheck() throws Exception {
-    when(checkService.checkAndUpdate(key)).thenReturn(check);
+    when(checkService.checkAndUpdate(projectId, ruleKey, userKey)).thenReturn(check);
 
     mockMvc.perform(
-                    post("/check")
+                    post("/projects/{projectId}/rules/{ruleKey}/check", projectId, ruleKey)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(key)
+                            .content(userKeyJson)
             )
             .andExpect(status().isOk())
             .andExpect(content().json(responseJson));

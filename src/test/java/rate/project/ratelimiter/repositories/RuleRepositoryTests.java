@@ -28,14 +28,16 @@ public class RuleRepositoryTests {
   @Test
   void saveShouldPersistRule() {
     RuleEntity rule = new RuleEntity(
-            "user:potassiumlover33:login",
+            null,
+            "example",
+            "login",
             RateLimiterAlgorithm.TOKEN_BUCKET,
             new TokenBucketParameters(10, 1)
     );
 
     repository.save(rule);
 
-    RuleEntity found = repository.findById(rule.key()).orElse(null);
+    RuleEntity found = repository.findByProjectIdAndRuleKey(rule.projectId(), rule.ruleKey()).orElse(null);
     assertNotNull(found);
     assertEquals(rule, found);
 

@@ -10,9 +10,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 import rate.project.ratelimiter.dtos.CheckResponse;
 import rate.project.ratelimiter.dtos.parameters.LeakyBucketParameters;
-import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.entities.redis.RateLimiterState;
-import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
 
 import java.util.List;
 
@@ -32,18 +30,15 @@ public class LeakyBucketRateLimiterTests {
 
   private final LeakyBucketParameters parameters = new LeakyBucketParameters(10, 1);
 
-  private final RuleEntity rule = new RuleEntity(
-          "user:potassiumlover33:login",
-          RateLimiterAlgorithm.TOKEN_BUCKET,
-          parameters
-  );
+  private final String name = "example:login";
 
   @BeforeEach
   void setUp() {
     rateLimiter = new LeakyBucketRateLimiter(
             redisTemplate,
             leakyBucketScript,
-            parameters
+            parameters,
+            name
     );
   }
 
@@ -51,15 +46,16 @@ public class LeakyBucketRateLimiterTests {
   void tryAcquireShouldReturnRateLimiterResponse() {
     List<Long> redisResult = List.of(1L, 9L, 0L);
 
+    String userKey = "potassiumlover33";
     when(redisTemplate.execute(
             eq(leakyBucketScript),
-            eq(List.of(rule.key())),
+            eq(List.of(name + ":" + userKey)),
             eq(String.valueOf(parameters.capacity())),
             eq(String.valueOf(parameters.outflowRate())),
             anyString()
     )).thenReturn(redisResult);
 
-    CheckResponse response = rateLimiter.tryAcquire(rule.key());
+    CheckResponse response = rateLimiter.tryAcquire(userKey);
     assertEquals(new CheckResponse(true, 9, 0), response);
   }
 

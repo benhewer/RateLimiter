@@ -21,9 +21,12 @@ public class RuleController {
     this.ruleService = ruleService;
   }
 
-  @PostMapping("/rules")
-  public ResponseEntity<@NotNull ApiResponse<RuleDTO>> addRule(@RequestBody RuleDTO rule) {
-    boolean success = ruleService.createRule(rule);
+  @PostMapping("/projects/{projectId}/rules")
+  public ResponseEntity<@NotNull ApiResponse<RuleDTO>> addRule(
+          @PathVariable String projectId,
+          @RequestBody RuleDTO rule
+  ) {
+    boolean success = ruleService.createRule(projectId, rule);
 
     if (!success) {
       // If the rule already exists, return HTTP 400 Bad Request
@@ -37,13 +40,16 @@ public class RuleController {
     // Return HTTP 201 Created with the rule in the body
     ApiResponse<RuleDTO> response = new ApiResponse<>(rule);
     return ResponseEntity
-            .created(URI.create("/rule/" + rule.key()))
+            .created(URI.create("/projects/" + projectId + "/rules/" + rule.ruleKey()))
             .body(response);
   }
 
-  @GetMapping("/rules/{key}")
-  public ResponseEntity<@NotNull ApiResponse<RuleDTO>> getRule(@PathVariable String key) {
-    RuleDTO rule = ruleService.getRule(key);
+  @GetMapping("projects/{projectId}/rules/{ruleKey}")
+  public ResponseEntity<@NotNull ApiResponse<RuleDTO>> getRule(
+          @PathVariable String projectId,
+          @PathVariable String ruleKey
+  ) {
+    RuleDTO rule = ruleService.getRule(projectId, ruleKey);
 
     // If the rule is not in the DB, return HTTP 400 Bad Request
     if (rule == null) {
@@ -59,9 +65,12 @@ public class RuleController {
             .ok(response);
   }
 
-  @PutMapping("/rules/{key}")
-  public ResponseEntity<@NotNull ApiResponse<RuleDTO>> updateRule(@PathVariable String key, @RequestBody RuleDTO rule) {
-    boolean success = ruleService.updateRule(key, rule);
+  @PutMapping("/projects/{projectId}/rules/{ruleKey}")
+  public ResponseEntity<@NotNull ApiResponse<RuleDTO>> updateRule(
+          @PathVariable String projectId,
+          @PathVariable String ruleKey,
+          @RequestBody RuleDTO rule) {
+    boolean success = ruleService.updateRule(projectId, ruleKey, rule);
 
     // If rule is not in the DB, return HTTP 400 Bad Request
     if (!success) {
@@ -77,9 +86,12 @@ public class RuleController {
             .ok(response);
   }
 
-  @DeleteMapping("/rules/{key}")
-  public ResponseEntity<@NotNull ApiResponse<RuleDTO>> deleteRule(@PathVariable String key) {
-    RuleDTO rule = ruleService.deleteRule(key);
+  @DeleteMapping("/projects/{projectId}/rules/{ruleKey}")
+  public ResponseEntity<@NotNull ApiResponse<RuleDTO>> deleteRule(
+          @PathVariable String projectId,
+          @PathVariable String ruleKey
+  ) {
+    RuleDTO rule = ruleService.deleteRule(projectId, ruleKey);
 
     // If rule is not in the DB, return HTTP 400 Bad Request
     if (rule == null) {

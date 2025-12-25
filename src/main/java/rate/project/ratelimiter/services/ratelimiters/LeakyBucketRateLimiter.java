@@ -16,23 +16,26 @@ public final class LeakyBucketRateLimiter implements RateLimiter {
 
   private final long capacity;
   private final long outflowRate;
+  private final String name;
 
   public LeakyBucketRateLimiter(
           RedisOperations<String, RateLimiterState> redis,
           RedisScript<@NotNull List<Long>> leakyBucketScript,
-          LeakyBucketParameters parameters
+          LeakyBucketParameters parameters,
+          String name
   ) {
     this.redis = redis;
     this.leakyBucketScript = leakyBucketScript;
     this.capacity = parameters.capacity();
     this.outflowRate = parameters.outflowRate();
+    this.name = name;
   }
 
   @Override
-  public CheckResponse tryAcquire(String key) {
+  public CheckResponse tryAcquire(String userKey) {
     List<Long> result = redis.execute(
             leakyBucketScript,
-            List.of(key),
+            List.of(name + ":" + userKey),
             String.valueOf(capacity),
             String.valueOf(outflowRate),
             String.valueOf(System.currentTimeMillis())

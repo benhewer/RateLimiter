@@ -32,14 +32,16 @@ public class RuleControllerTests {
   @MockitoBean
   private RuleService service;
 
+  private String projectId;
   private RuleDTO rule;
   private String ruleJson;
   private String responseJson;
 
   @BeforeAll
   void setup() {
+    projectId = "example";
     rule = new RuleDTO(
-            "user:potassiumlover33:login",
+            "login",
             RateLimiterAlgorithm.TOKEN_BUCKET,
             new TokenBucketParameters(10, 1)
     );
@@ -50,10 +52,10 @@ public class RuleControllerTests {
 
   @Test
   void whenRuleDoesNotExists_thenPostRuleShouldAcceptAndReturnRule() throws Exception {
-    when(service.createRule(rule)).thenReturn(true);
+    when(service.createRule(projectId, rule)).thenReturn(true);
 
     mockMvc.perform(
-                    post("/rules")
+                    post("/projects/{projectId}/rules", projectId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(ruleJson)
             )
@@ -63,10 +65,10 @@ public class RuleControllerTests {
 
   @Test
   void whenRuleAlreadyExists_thenPostRuleShouldReturnBadRequest() throws Exception {
-    when(service.createRule(rule)).thenReturn(false);
+    when(service.createRule(projectId, rule)).thenReturn(false);
 
     mockMvc.perform(
-                    post("/rules")
+                    post("/projects/{projectId}/rules", projectId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(ruleJson)
             )
@@ -75,10 +77,10 @@ public class RuleControllerTests {
 
   @Test
   void whenRuleFound_thenGetRuleShouldReturnRule() throws Exception {
-    when(service.getRule(rule.key())).thenReturn(rule);
+    when(service.getRule(projectId, rule.ruleKey())).thenReturn(rule);
 
     mockMvc.perform(
-                    get("/rules/{key}", rule.key())
+                    get("/projects/{projectId}/rules/{ruleKey}", projectId, rule.ruleKey())
             )
             .andExpect(status().isOk())
             .andExpect(content().json(responseJson));
@@ -86,20 +88,20 @@ public class RuleControllerTests {
 
   @Test
   void whenRuleNotFound_thenGetRuleShouldReturnBadRequest() throws Exception {
-    when(service.getRule(rule.key())).thenReturn(null);
+    when(service.getRule(projectId, rule.ruleKey())).thenReturn(null);
 
     mockMvc.perform(
-                    get("/rules/{key}", rule.key())
+                    get("/projects/{projectId}/rules/{ruleKey}", projectId, rule.ruleKey())
             )
             .andExpect(status().isBadRequest());
   }
 
   @Test
   void whenRuleFound_thenUpdateRuleShouldReturnRule() throws Exception {
-    when(service.updateRule(rule.key(), rule)).thenReturn(true);
+    when(service.updateRule(projectId, rule.ruleKey(), rule)).thenReturn(true);
 
     mockMvc.perform(
-                    put("/rules/{key}", rule.key())
+                    put("/projects/{projectId}/rules/{ruleKey}", projectId, rule.ruleKey())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(ruleJson)
             )
@@ -109,10 +111,10 @@ public class RuleControllerTests {
 
   @Test
   void whenRuleNotFound_thenUpdateRuleShouldReturnBadRequest() throws Exception {
-    when(service.updateRule(rule.key(), rule)).thenReturn(false);
+    when(service.updateRule(projectId, rule.ruleKey(), rule)).thenReturn(false);
 
     mockMvc.perform(
-                    put("/rules/{key}", rule.key())
+                    put("/projects/{projectId}/rules/{ruleKey}", projectId, rule.ruleKey())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(ruleJson)
             )
@@ -121,10 +123,10 @@ public class RuleControllerTests {
 
   @Test
   void whenKeysAreInconsistent_thenUpdateRuleShouldReturnBadRequest() throws Exception {
-    when(service.updateRule("incorrect:key", rule)).thenReturn(false);
+    when(service.updateRule("incorrect", "key", rule)).thenReturn(false);
 
     mockMvc.perform(
-                    put("/rules/{key}", "incorrect:key")
+                    put("/projects/{projectId}/rules/{ruleKey}", "incorrect", "key")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(ruleJson)
             )
@@ -133,20 +135,20 @@ public class RuleControllerTests {
 
   @Test
   void whenRuleNotFound_thenDeleteRuleShouldReturnBadRequest() throws Exception {
-    when(service.deleteRule(rule.key())).thenReturn(null);
+    when(service.deleteRule(projectId, rule.ruleKey())).thenReturn(null);
 
     mockMvc.perform(
-                    delete("/rules/{key}", rule.key())
+                    delete("/projects/{projectId}/rules/{ruleKey}", projectId, rule.ruleKey())
             )
             .andExpect(status().isBadRequest());
   }
 
   @Test
   void whenRuleFound_thenDeleteRuleShouldReturnDeletedRule() throws Exception {
-    when(service.deleteRule(rule.key())).thenReturn(rule);
+    when(service.deleteRule(projectId, rule.ruleKey())).thenReturn(rule);
 
     mockMvc.perform(
-                    delete("/rules/{key}", rule.key())
+                    delete("/projects/{projectId}/rules/{ruleKey}", projectId, rule.ruleKey())
             )
             .andExpect(status().isOk())
             .andExpect(content().json(responseJson));

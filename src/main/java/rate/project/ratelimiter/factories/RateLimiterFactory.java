@@ -29,19 +29,19 @@ public class RateLimiterFactory {
     this.scripts = scripts;
   }
 
-  @Cacheable(value = "RateLimiterCache", key = "#key", unless = "#result == null")
-  public RateLimiter getRateLimiter(String key) {
-    RuleEntity rule = ruleRepository.findById(key).orElse(null);
+  @Cacheable(value = "RateLimiterCache", key = "#projectId + ':' + #ruleKey", unless = "#result == null")
+  public RateLimiter getRateLimiter(String projectId, String ruleKey) {
+    RuleEntity rule = ruleRepository.findByProjectIdAndRuleKey(projectId, ruleKey).orElse(null);
     if (rule == null) {
       return null;
     }
 
     return switch (rule.algorithm()) {
       case TOKEN_BUCKET -> new TokenBucketRateLimiter(
-              redis, scripts.tokenBucketScript(), (TokenBucketParameters) rule.parameters()
+              redis, scripts.tokenBucketScript(), (TokenBucketParameters) rule.parameters(), projectId + ":" + ruleKey
       );
       case LEAKY_BUCKET -> new LeakyBucketRateLimiter(
-              redis, scripts.leakyBucketScript(), (LeakyBucketParameters) rule.parameters()
+              redis, scripts.leakyBucketScript(), (LeakyBucketParameters) rule.parameters(), projectId + ":" + ruleKey
       );
     };
   }

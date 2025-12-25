@@ -12,7 +12,7 @@ import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
  * This class represents a rate limiter rule. It is convertible to and from JSON.
  * The JSON format is as follows:
  * {
- *   "key": "user:potassiumlover33:login",
+ *   "rule_key": "login"
  *   "algorithm": "TOKEN_BUCKET",
  *   "parameters": {
  *     "capacity": 10,
@@ -21,7 +21,7 @@ import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
  * }
  */
 public record RuleDTO(
-        String key,
+        String ruleKey,
         RateLimiterAlgorithm algorithm,
         // Since AlgorithmParameters is polymorphic, we need to use Jackson's
         // type information to deserialize it, choosing the correct subtype.
@@ -62,7 +62,7 @@ public record RuleDTO(
   @Override
   public @NotNull String toString() {
     return "RuleDTO{" +
-            "key='" + key + '\'' +
+            "ruleKey='" + ruleKey + '\'' +
             ", algorithm=" + algorithm +
             ", parameters=" + parameters +
             '}';
@@ -73,7 +73,9 @@ public record RuleDTO(
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     RuleDTO ruleDTO = (RuleDTO) o;
-    return key.equals(ruleDTO.key) && algorithm == ruleDTO.algorithm && parameters.equals(ruleDTO.parameters);
+    return ruleKey.equals(ruleDTO.ruleKey)
+            && algorithm == ruleDTO.algorithm
+            && parameters.equals(ruleDTO.parameters);
   }
 
 }

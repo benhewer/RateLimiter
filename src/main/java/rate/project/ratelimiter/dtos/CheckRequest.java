@@ -3,8 +3,8 @@ package rate.project.ratelimiter.dtos;
 /**
  * Used to accept JSON of the form:
  * {
- *   "key": key
+ *   "user_key": potassiumlover33
  * }
- * @param key The key being checked
+ * @param userKey The key for the user being limited.
  */
-public record CheckRequest(String key) { }
+public record CheckRequest(String userKey) { }

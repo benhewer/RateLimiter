@@ -2,6 +2,7 @@ package rate.project.ratelimiter.controllers;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,9 +20,12 @@ public class CheckController {
     this.checkService = checkService;
   }
 
-  @PostMapping("/check")
-  public ResponseEntity<@NotNull ApiResponse<CheckResponse>> checkAndUpdate(@RequestBody CheckRequest checkRequest) {
-    CheckResponse check = checkService.checkAndUpdate(checkRequest.key());
+  @PostMapping("/projects/{projectId}/rules/{ruleKey}/check")
+  public ResponseEntity<@NotNull ApiResponse<CheckResponse>> checkAndUpdate(
+          @PathVariable String projectId,
+          @PathVariable String ruleKey,
+          @RequestBody CheckRequest checkRequest) {
+    CheckResponse check = checkService.checkAndUpdate(projectId, ruleKey, checkRequest.userKey());
 
     if (check == null) {
       ApiResponse<CheckResponse> response = new ApiResponse<>("No rule found for given key.");

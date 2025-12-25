@@ -15,7 +15,7 @@ public class RuleDTOTests {
   void jsonShouldDeserializeToRule() {
     String json = """
             {
-              "key": "user:potassiumlover33:login",
+              "ruleKey": "login",
               "algorithm": "TOKEN_BUCKET",
               "parameters": {
                 "capacity": 10,
@@ -26,7 +26,7 @@ public class RuleDTOTests {
 
     RuleDTO rule = objectMapper.readValue(json, RuleDTO.class);
 
-    assertEquals("user:potassiumlover33:login", rule.key());
+    assertEquals("login", rule.ruleKey());
     assertEquals(RateLimiterAlgorithm.TOKEN_BUCKET, rule.algorithm());
 
     assertInstanceOf(TokenBucketParameters.class, rule.parameters());
@@ -41,7 +41,7 @@ public class RuleDTOTests {
   @Test
   void ruleShouldSerializeToJson() {
     RuleDTO rule = new RuleDTO(
-            "user:potassiumlover33:login",
+            "login",
             RateLimiterAlgorithm.TOKEN_BUCKET,
             new TokenBucketParameters(10, 1)
     );
@@ -49,7 +49,7 @@ public class RuleDTOTests {
     String json = objectMapper.writeValueAsString(rule);
 
     assertEquals("""
-                    {"key":"user:potassiumlover33:login","algorithm":"TOKEN_BUCKET","parameters":{"capacity":10,"refillRate":1}}""",
+                    {"ruleKey":"login","algorithm":"TOKEN_BUCKET","parameters":{"capacity":10,"refillRate":1}}""",
             json);
   }
 
@@ -57,7 +57,7 @@ public class RuleDTOTests {
   void ruleShouldThrowWhenAlgorithmDoesNotMatchParameter() {
     IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
             new RuleDTO(
-                    "user:potassiumlover33:login",
+                    "login",
                     RateLimiterAlgorithm.LEAKY_BUCKET,
                     new TokenBucketParameters(10, 1)
             )

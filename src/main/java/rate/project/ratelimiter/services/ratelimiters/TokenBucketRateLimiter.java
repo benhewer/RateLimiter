@@ -16,23 +16,26 @@ public final class TokenBucketRateLimiter implements RateLimiter {
 
   private final long capacity;
   private final long refillRate;
+  private final String name;
 
   public TokenBucketRateLimiter(
           RedisTemplate<String, RateLimiterState> redis,
           RedisScript<@NotNull List<Long>> tokenBucketScript,
-          TokenBucketParameters parameters
+          TokenBucketParameters parameters,
+          String name
   ) {
     this.redis = redis;
     this.tokenBucketScript = tokenBucketScript;
     this.capacity = parameters.capacity();
     this.refillRate = parameters.refillRate();
+    this.name = name;
   }
 
   @Override
-  public CheckResponse tryAcquire(String key) {
+  public CheckResponse tryAcquire(String userKey) {
     List<Long> result = redis.execute(
             tokenBucketScript,
-            List.of(key),
+            List.of(name + ":" + userKey),
             String.valueOf(capacity),
             String.valueOf(refillRate),
             String.valueOf(System.currentTimeMillis())

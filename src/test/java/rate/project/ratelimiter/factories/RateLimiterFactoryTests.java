@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import rate.project.ratelimiter.config.CacheConfig;
 import rate.project.ratelimiter.config.TestMongoConfig;
+import rate.project.ratelimiter.config.TestRedisConfig;
 import rate.project.ratelimiter.dtos.RuleDTO;
 import rate.project.ratelimiter.dtos.parameters.LeakyBucketParameters;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
@@ -26,7 +27,7 @@ import static org.mockito.Mockito.*;
 
 // Spring boot is loaded to fully test the cache
 @SpringBootTest
-@Import({CacheConfig.class, TestMongoConfig.class})
+@Import({CacheConfig.class, TestMongoConfig.class, TestRedisConfig.class})
 public class RateLimiterFactoryTests {
 
   @MockitoSpyBean
@@ -41,75 +42,81 @@ public class RateLimiterFactoryTests {
   @Autowired
   private CacheManager cacheManager;
 
+  private final String projectId = "example";
+
   private final RuleDTO tokenBucketEntity = new RuleDTO(
-          "user:potassiumlover33:login",
+          "login",
           RateLimiterAlgorithm.TOKEN_BUCKET,
           new TokenBucketParameters(10, 1)
   );
 
   private final RuleDTO leakyBucketEntity = new RuleDTO(
-          "user:potassiumlover33:post",
+          "post",
           RateLimiterAlgorithm.LEAKY_BUCKET,
           new LeakyBucketParameters(10, 1)
   );
 
   @BeforeEach
-  void clearCache() {
+  void setUp() {
     Cache cache = cacheManager.getCache("RateLimiterCache");
     if (cache != null) {
       cache.clear();
     }
+
+    ruleRepository.deleteAll();
   }
 
   @Test
   void whenKeyNotFound_thenGetRateLimiterShouldReturnNull() {
-    RateLimiter nullRateLimiter = rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
+    RateLimiter nullRateLimiter = rateLimiterFactory.getRateLimiter(projectId, tokenBucketEntity.ruleKey());
     assertNull(nullRateLimiter);
   }
 
   @Test
   void whenKeyFound_thenGetRateLimiterShouldReturnCorrectRateLimiter() {
     // Token Bucket
-    ruleService.createRule(tokenBucketEntity);
-    RateLimiter tokenBucketRateLimiter = rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
+    ruleService.createRule(projectId, tokenBucketEntity);
+    RateLimiter tokenBucketRateLimiter = rateLimiterFactory.getRateLimiter(projectId, tokenBucketEntity.ruleKey());
     assertEquals(TokenBucketRateLimiter.class, tokenBucketRateLimiter.getClass());
 
     // Leaky Bucket
-    ruleService.createRule(leakyBucketEntity);
-    RateLimiter leakyBucketRateLimiter = rateLimiterFactory.getRateLimiter(leakyBucketEntity.key());
+    ruleService.createRule(projectId, leakyBucketEntity);
+    RateLimiter leakyBucketRateLimiter = rateLimiterFactory.getRateLimiter(projectId, leakyBucketEntity.ruleKey());
     assertEquals(LeakyBucketRateLimiter.class, leakyBucketRateLimiter.getClass());
   }
 
   @Test
   void shouldOnlyQueryMongoOnceForSameRule() {
-    ruleService.createRule(tokenBucketEntity);
+    ruleService.createRule(projectId, tokenBucketEntity);
 
-    rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
-    rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
+    rateLimiterFactory.getRateLimiter(projectId, tokenBucketEntity.ruleKey());
+    rateLimiterFactory.getRateLimiter(projectId, tokenBucketEntity.ruleKey());
 
     // Ensure only query DB once
-    verify(ruleRepository).findById(anyString());
+    verify(ruleRepository).findByProjectIdAndRuleKey(projectId, tokenBucketEntity.ruleKey());
   }
 
   @Test
   void whenRuleIsDeleted_thenRuleShouldBeEvictedFromCache() {
-    ruleService.createRule(tokenBucketEntity);
-    rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
-    ruleService.deleteRule(tokenBucketEntity.key());
+    ruleService.createRule(projectId, tokenBucketEntity);
+    rateLimiterFactory.getRateLimiter(projectId, tokenBucketEntity.ruleKey());
+    ruleService.deleteRule(projectId, tokenBucketEntity.ruleKey());
 
-    RateLimiter rateLimiter = rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
+    RateLimiter rateLimiter = rateLimiterFactory.getRateLimiter(projectId, tokenBucketEntity.ruleKey());
     assertNull(rateLimiter);
   }
 
   @Test
   void whenRuleIsUpdated_thenRuleShouldBeEvictedFromCache() {
-    ruleService.createRule(tokenBucketEntity);
-    rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
-    ruleService.updateRule(tokenBucketEntity.key(), tokenBucketEntity);
+    ruleService.createRule(projectId, tokenBucketEntity);
+    rateLimiterFactory.getRateLimiter(projectId, tokenBucketEntity.ruleKey());
+    ruleService.updateRule(projectId, tokenBucketEntity.ruleKey(), tokenBucketEntity);
 
-    rateLimiterFactory.getRateLimiter(tokenBucketEntity.key());
+    rateLimiterFactory.getRateLimiter(projectId, tokenBucketEntity.ruleKey());
 
-    verify(ruleRepository, times(2)).findById(anyString());
+    // Called once in updateRule, and once in each getRateLimiter (as the cache should be flushed)
+    verify(ruleRepository, times(3))
+            .findByProjectIdAndRuleKey(projectId, tokenBucketEntity.ruleKey());
   }
 
 }
