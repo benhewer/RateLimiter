@@ -1,5 +1,6 @@
 package rate.project.ratelimiter.repositories;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +20,11 @@ public class RuleRepositoryTests {
 
   @Autowired
   private RuleRepository repository;
+
+  @BeforeEach
+  void setUp() {
+    repository.deleteAll();
+  }
 
   @Test
   void repositoryShouldStartEmpty() {

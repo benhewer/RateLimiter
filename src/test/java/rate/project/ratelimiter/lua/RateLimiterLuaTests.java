@@ -42,7 +42,7 @@ public class RateLimiterLuaTests {
   void whenTokenAvailable_thenScriptShouldCorrectlyUpdateState(RedisScript<@NotNull List<Long>> rateLimiterScript) {
     List<Long> result = testRedisTemplate.execute(
             rateLimiterScript,
-            List.of("user:potassiumlover33:login"),
+            List.of("example:post:potassiumlover33"),
             String.valueOf(10),
             String.valueOf(1),
             String.valueOf(System.currentTimeMillis())
@@ -61,7 +61,7 @@ public class RateLimiterLuaTests {
 
     testRedisTemplate.execute(
             rateLimiterScript,
-            List.of("user:potassiumlover33:post"),
+            List.of("example:login:potassiumlover33"),
             String.valueOf(1),
             String.valueOf(1),
             String.valueOf(System.currentTimeMillis())
@@ -69,7 +69,7 @@ public class RateLimiterLuaTests {
 
     List<Long> result = testRedisTemplate.execute(
             rateLimiterScript,
-            List.of("user:potassiumlover33:post"),
+            List.of("example:login:potassiumlover33"),
             String.valueOf(1),
             String.valueOf(1),
             String.valueOf(System.currentTimeMillis())
