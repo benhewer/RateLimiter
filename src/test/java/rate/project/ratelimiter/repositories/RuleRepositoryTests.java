@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import rate.project.ratelimiter.config.TestMongoConfig;
+import rate.project.ratelimiter.config.TestRedisConfig;
 import rate.project.ratelimiter.dtos.parameters.TokenBucketParameters;
 import rate.project.ratelimiter.entities.mongo.RuleEntity;
 import rate.project.ratelimiter.enums.RateLimiterAlgorithm;
@@ -15,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
-@Import(TestMongoConfig.class)
+@Import({TestMongoConfig.class, TestRedisConfig.class})
 public class RuleRepositoryTests {
 
   @Autowired

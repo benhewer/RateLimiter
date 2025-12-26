@@ -17,7 +17,7 @@ import rate.project.ratelimiter.entities.redis.RateLimiterState;
 public class TestRedisConfig {
 
   public static final RedisContainer redisContainer =
-          new RedisContainer(DockerImageName.parse("redis:7.0"))
+          new RedisContainer(DockerImageName.parse("redis:latest"))
                   .withExposedPorts(6379);
 
   static {

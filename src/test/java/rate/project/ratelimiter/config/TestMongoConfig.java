@@ -8,7 +8,7 @@ import org.testcontainers.containers.MongoDBContainer;
 public class TestMongoConfig {
 
   private static final MongoDBContainer mongoContainer =
-          new MongoDBContainer("mongo:7.0")
+          new MongoDBContainer("mongo:latest")
                   .withExposedPorts(27017);
 
   static {
