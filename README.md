@@ -54,6 +54,6 @@ Used to check if a request is allowed, and return other useful data such as rema
 
 The project is fully dockerized, so simply spin up all containers necessary with: 
 
-```docker-compose up --build``` 
+```docker-compose up``` 
 
-The application will be available at `http://localhost:8080`.
+This will build and run the application. It will be available at `http://localhost:8080`.
